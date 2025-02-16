@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: makao-shop
+
+  profiles:
+    include: local-db
+    active: prod-db
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        highlight_sql: true
+
+logging:
+  level:
+    root: INFO
+    kr.co.shop.makao: DEBUG
