@@ -3,6 +3,7 @@ package kr.co.shop.makao.response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,11 +23,16 @@ public class GlobalControllerAdvice {
         return CommonResponse.error(e.getStatus(), e.getMessage());
     }
 
-    // Validation 메시지 별로임
-    @ExceptionHandler({MethodArgumentNotValidException.class})
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<CommonResponse<String>> handleValidationException(MethodArgumentNotValidException e) {
         log.info(e.getMessage(), e);
-        return CommonResponse.error(HttpStatus.BAD_REQUEST, e.getMessage());
+        return CommonResponse.error(HttpStatus.BAD_REQUEST, e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<CommonResponse<String>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.info(e.getMessage(), e);
+        return CommonResponse.error(HttpStatus.BAD_REQUEST, e.getCause().getCause().getMessage());
     }
 }
 

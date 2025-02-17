@@ -21,7 +21,9 @@ services:
       start_period: 10s
 
   makao-shop-api:
-    image: jchan0211/makao-shop:latest
+    build:
+      context: .
+      dockerfile: dockerfile
     container_name: makao-shop-api
     restart: unless-stopped
     depends_on:
