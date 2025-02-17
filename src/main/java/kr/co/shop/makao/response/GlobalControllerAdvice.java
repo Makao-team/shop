@@ -22,11 +22,10 @@ public class GlobalControllerAdvice {
         return CommonResponse.error(e.getStatus(), e.getMessage());
     }
 
-    // Validation 메시지 별로임
-    @ExceptionHandler({MethodArgumentNotValidException.class})
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<CommonResponse<String>> handleValidationException(MethodArgumentNotValidException e) {
         log.info(e.getMessage(), e);
-        return CommonResponse.error(HttpStatus.BAD_REQUEST, e.getMessage());
+        return CommonResponse.error(HttpStatus.BAD_REQUEST, e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
     }
 }
 
