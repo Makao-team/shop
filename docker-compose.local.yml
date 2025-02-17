@@ -1,0 +1,18 @@
+# Local Docker Compose Configuration
+version: '3.8'
+
+services:
+  makao-shop-db:
+    image: postgres:latest
+    container_name: makao-shop-postgres
+    environment:
+      POSTGRES_USER: makao
+      POSTGRES_PASSWORD: test1234
+      POSTGRES_DB: makao-shop-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
