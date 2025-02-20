@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/makao-shop-db
+    url: jdbc:postgresql://makao-shop-db:5432/makao_shop_db
     username: makao
     password: test1234
     driver-class-name: org.postgresql.Driver
