@@ -1,6 +1,5 @@
 package kr.co.shop.makao.service;
 
-import jakarta.transaction.Transactional;
 import kr.co.shop.makao.dto.AuthDTO;
 import kr.co.shop.makao.entity.User;
 import kr.co.shop.makao.repository.UserRepository;
@@ -8,6 +7,7 @@ import kr.co.shop.makao.response.CommonException;
 import kr.co.shop.makao.util.StringEncoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -31,5 +31,13 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean verifyUser(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> CommonException.BAD_REQUEST.toException("USER_NOT_FOUND"));
+
+        return StringEncoder.match(password, user.getPassword());
     }
 }
