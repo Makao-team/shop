@@ -2,13 +2,16 @@ package kr.co.shop.makao.entity;
 
 import jakarta.persistence.*;
 import kr.co.shop.makao.entity.base.Auditable;
+import kr.co.shop.makao.entity.converter.UserRoleConverter;
 import kr.co.shop.makao.enums.UserRole;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+@Getter
 @NoArgsConstructor
 @SuperBuilder
-@Entity
+@Entity(name = "user")
 public class User extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -26,7 +29,7 @@ public class User extends Auditable {
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = UserRoleConverter.class)
     @Column(nullable = false)
     private UserRole role;
 }
