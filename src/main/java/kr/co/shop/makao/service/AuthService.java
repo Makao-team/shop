@@ -4,8 +4,10 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import kr.co.shop.makao.component.AuthTokenManager;
 import kr.co.shop.makao.dto.AuthDTO;
+import kr.co.shop.makao.entity.User;
 import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.response.CommonException;
+import kr.co.shop.makao.util.StringEncoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +25,9 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthDTO.SignInResponse signIn(AuthDTO.SignInRequest dto) {
-        if (!userService.verifyUser(dto.email(), dto.password()))
+        User user = userService.findByEmail(dto.email());
+
+        if (!StringEncoder.match(dto.password(), user.getPassword()))
             throw CommonException.BAD_REQUEST.toException("AUTHENTICATION_FAILED");
 
         String accessToken = authTokenManager.create(dto.email(), TokenType.ACCESS_TOKEN);
@@ -32,6 +36,7 @@ public class AuthService {
         return AuthDTO.SignInResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .role(user.getRole())
                 .build();
     }
 

@@ -7,7 +7,9 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum CommonException {
     BAD_REQUEST(HttpStatus.BAD_REQUEST),
-    IMAGE_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR);
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED),
+    IMAGE_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR),
+    AUTH_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final HttpStatus status;
 

@@ -6,7 +6,6 @@ import kr.co.shop.makao.enums.UserRole;
 import kr.co.shop.makao.repository.ExistsEmailAndPhoneNumber;
 import kr.co.shop.makao.repository.UserRepository;
 import kr.co.shop.makao.response.CommonExceptionImpl;
-import kr.co.shop.makao.util.StringEncoder;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +18,6 @@ import java.util.Optional;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -71,34 +69,20 @@ class UserServiceTest {
     }
 
     @Nested
-    class validateUser {
+    class findByEmail {
         @Test
-        void existsByEmail_성공_인증_성공() {
+        void findByEmail_성공() {
             when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(User.builder().password("password123!").build()));
 
-            try (var d = mockStatic(StringEncoder.class)) {
-                when(StringEncoder.match(anyString(), anyString())).thenReturn(true);
-
-                assertThat(userService.verifyUser("email", "password123!")).isTrue();
-            }
+            var user = userService.findByEmail("email");
+            assertThat(user.getPassword()).isEqualTo("password123!");
         }
 
         @Test
-        void existsByEmail_성공_인증_실패() {
-            when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(User.builder().password("password123!").build()));
-
-            try (var d = mockStatic(StringEncoder.class)) {
-                when(StringEncoder.match(anyString(), anyString())).thenReturn(false);
-
-                assertThat(userService.verifyUser("email", "password123!")).isFalse();
-            }
-        }
-
-        @Test
-        void existsByEmail_이메일_없음_실패() {
+        void findByEmail_이메일_없음_실패() {
             when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
-            var exception = assertThrows(CommonExceptionImpl.class, () -> userService.verifyUser("email", "password123!"));
+            var exception = assertThrows(CommonExceptionImpl.class, () -> userService.findByEmail("email"));
             assert exception.getMessage().equals("USER_NOT_FOUND");
         }
     }

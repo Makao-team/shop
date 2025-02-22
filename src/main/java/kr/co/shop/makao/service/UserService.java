@@ -34,10 +34,8 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public boolean verifyUser(String email, String password) {
-        User user = userRepository.findByEmail(email)
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> CommonException.BAD_REQUEST.toException("USER_NOT_FOUND"));
-
-        return StringEncoder.match(password, user.getPassword());
     }
 }

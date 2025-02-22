@@ -2,9 +2,11 @@ package kr.co.shop.makao.service;
 
 import kr.co.shop.makao.component.AuthTokenManager;
 import kr.co.shop.makao.dto.AuthDTO;
+import kr.co.shop.makao.entity.User;
 import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.enums.UserRole;
 import kr.co.shop.makao.response.CommonExceptionImpl;
+import kr.co.shop.makao.util.StringEncoder;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,8 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -45,29 +46,36 @@ class AuthServiceTest {
     class SignIn {
         AuthDTO.SignInRequest dto = AuthDTO.SignInRequest.builder()
                 .email("email")
-                .password("password")
+                .password("password123!")
                 .build();
+        User user = User.builder().password("hashed").build();
 
         @Test
         void signIn_성공() {
-            when(userService.verifyUser(dto.email(), dto.password())).thenReturn(true);
-            when(authTokenManager.create(dto.email(), TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
-            when(authTokenManager.create(dto.email(), TokenType.REFRESH_TOKEN)).thenReturn("refreshToken");
+            when(userService.findByEmail(dto.email())).thenReturn(user);
+            try (var stringEncoderMockedStatic = mockStatic(StringEncoder.class)) {
+                stringEncoderMockedStatic.when(() -> StringEncoder.match(dto.password(), user.getPassword())).thenReturn(true);
+                when(authTokenManager.create(dto.email(), TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
+                when(authTokenManager.create(dto.email(), TokenType.REFRESH_TOKEN)).thenReturn("refreshToken");
 
-            var res = AuthDTO.SignInResponse.builder()
-                    .accessToken("accessToken")
-                    .refreshToken("refreshToken")
-                    .build();
+                var res = AuthDTO.SignInResponse.builder()
+                        .accessToken("accessToken")
+                        .refreshToken("refreshToken")
+                        .role(user.getRole())
+                        .build();
 
-            assertThat(authService.signIn(dto)).isEqualTo(res);
+                assertThat(authService.signIn(dto)).isEqualTo(res);
+            }
         }
 
         @Test
         void signIn_검증_실패() {
-            when(userService.verifyUser(dto.email(), dto.password())).thenReturn(false);
-
-            var exception = assertThrows(CommonExceptionImpl.class, () -> authService.signIn(dto));
-            assertThat(exception.getMessage()).isEqualTo("AUTHENTICATION_FAILED");
+            when(userService.findByEmail(dto.email())).thenReturn(user);
+            try (var stringEncoderMockedStatic = mockStatic(StringEncoder.class)) {
+                stringEncoderMockedStatic.when(() -> StringEncoder.match(dto.password(), user.getPassword())).thenReturn(false);
+                var exception = assertThrows(CommonExceptionImpl.class, () -> authService.signIn(dto));
+                assertThat(exception.getMessage()).isEqualTo("AUTHENTICATION_FAILED");
+            }
         }
     }
 
@@ -82,11 +90,7 @@ class AuthServiceTest {
             when(authTokenManager.getSubject(dto.refreshToken(), TokenType.REFRESH_TOKEN)).thenReturn("email");
             when(authTokenManager.create("email", TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
 
-            var res = AuthDTO.TokenReissueResponse.builder()
-                    .accessToken("accessToken")
-                    .build();
-
-            assertThat(authService.reissue(dto)).isEqualTo(res);
+            assertThat(authService.reissue(dto).accessToken()).isEqualTo("accessToken");
         }
 
         @Test

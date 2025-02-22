@@ -23,4 +23,21 @@ public record AuthDTO() {
             UserRole role
     ) {
     }
+
+    @Builder
+    public record SignInRequest(
+            @Email(message = "INVALID_EMAIL")
+            String email,
+            @Password
+            String password
+    ) {
+    }
+
+    @Builder
+    public record SignInResponse(
+            String accessToken,
+            String refreshToken,
+            UserRole role
+    ) {
+    }
 }
