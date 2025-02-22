@@ -8,12 +8,14 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 
 @Setter
-@Getter
 @Component
 @ConfigurationProperties(prefix = "auth")
 public class AuthProperties {
+    @Getter
     private Token accessToken;
+    @Getter
     private Token refreshToken;
+    private String isDevEnv;
 
     public String getAccessTokenSecret() {
         return accessToken.secret;
@@ -29,6 +31,10 @@ public class AuthProperties {
 
     public long getRefreshTokenExpiration() {
         return convertToSeconds(refreshToken.expiration);
+    }
+
+    public boolean isDevEnv() {
+        return Boolean.parseBoolean(isDevEnv);
     }
 
     private Long convertToSeconds(String time) {
