@@ -1,9 +1,11 @@
 package kr.co.shop.makao.component;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import kr.co.shop.makao.config.AuthProperties;
 import kr.co.shop.makao.enums.TokenType;
+import kr.co.shop.makao.response.CommonException;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -35,12 +37,18 @@ public class AuthTokenManager {
     }
 
     public String getSubject(String token, TokenType tokenType) {
-        var key = tokenType == TokenType.ACCESS_TOKEN ? accessTokenKey : refreshTokenKey;
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        try {
+            var key = tokenType == TokenType.ACCESS_TOKEN ? accessTokenKey : refreshTokenKey;
+            return Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject();
+        } catch (ExpiredJwtException cause) {
+            throw CommonException.BAD_REQUEST.toException("EXPIRED_REFRESH_TOKEN", cause);
+        } catch (Exception cause) {
+            throw CommonException.BAD_REQUEST.toException("INVALID_REFRESH_TOKEN", cause);
+        }
     }
 }

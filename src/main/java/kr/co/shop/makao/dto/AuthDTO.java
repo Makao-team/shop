@@ -40,4 +40,15 @@ public record AuthDTO() {
             UserRole role
     ) {
     }
+
+    @Builder
+    public record TokenReissueRequest(
+            @NotBlank(message = "INVALID_REFRESH_TOKEN")
+            String refreshToken
+    ) {
+    }
+
+    @Builder
+    public record TokenReissueResponse(String accessToken, String refreshToken) {
+    }
 }

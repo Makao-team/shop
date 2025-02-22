@@ -92,21 +92,5 @@ class AuthServiceTest {
 
             assertThat(authService.reissue(dto).accessToken()).isEqualTo("accessToken");
         }
-
-        @Test
-        void reissue_만료된_토큰() {
-            when(authTokenManager.getSubject(dto.refreshToken(), TokenType.REFRESH_TOKEN)).thenThrow(new io.jsonwebtoken.ExpiredJwtException(null, null, "message"));
-
-            var exception = assertThrows(CommonExceptionImpl.class, () -> authService.reissue(dto));
-            assertThat(exception.getMessage()).isEqualTo("EXPIRED_REFRESH_TOKEN");
-        }
-
-        @Test
-        void reissue_잘못된_토큰() {
-            when(authTokenManager.getSubject(dto.refreshToken(), TokenType.REFRESH_TOKEN)).thenThrow(new io.jsonwebtoken.security.SignatureException("message"));
-
-            var exception = assertThrows(CommonExceptionImpl.class, () -> authService.reissue(dto));
-            assertThat(exception.getMessage()).isEqualTo("INVALID_REFRESH_TOKEN");
-        }
     }
 }
