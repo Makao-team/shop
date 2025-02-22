@@ -39,4 +39,15 @@ public record AuthDTO() {
             String refreshToken
     ) {
     }
+
+    @Builder
+    public record TokenReissueRequest(
+            @NotBlank(message = "INVALID_REFRESH_TOKEN")
+            String refreshToken
+    ) {
+    }
+
+    @Builder
+    public record TokenReissueResponse(String accessToken) {
+    }
 }

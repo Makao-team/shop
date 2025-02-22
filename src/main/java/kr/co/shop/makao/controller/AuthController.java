@@ -29,4 +29,9 @@ public class AuthController {
     ResponseEntity<CommonResponse<AuthDTO.SignInResponse>> signIn(@RequestBody @Valid AuthDTO.SignInRequest dto) {
         return CommonResponse.success(authService.signIn(dto));
     }
+
+    @PostMapping("/token/reissue")
+    ResponseEntity<CommonResponse<AuthDTO.TokenReissueResponse>> reissue(@RequestBody @Valid AuthDTO.TokenReissueRequest dto) {
+        return CommonResponse.success(authService.reissue(dto));
+    }
 }

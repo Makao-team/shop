@@ -1,16 +1,20 @@
 package kr.co.shop.makao.controller;
 
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import io.restassured.http.ContentType;
 import kr.co.shop.makao.config.PostgreInitializer;
 import kr.co.shop.makao.dto.AuthDTO;
 import kr.co.shop.makao.enums.UserRole;
+import kr.co.shop.makao.util.RandomString;
 import kr.co.shop.makao.util.StringEncoder;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 
+import java.util.Date;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.any;
@@ -18,6 +22,9 @@ import static org.hamcrest.Matchers.equalTo;
 
 @ContextConfiguration(initializers = PostgreInitializer.class)
 class AuthControllerTest extends IntegrationTest {
+    @Value("${auth.refresh-token.secret}")
+    private String refreshTokenSecret;
+
     private void insertUser(String name, String email, String phoneNumber, String password, UserRole role) {
         transactionTemplate.execute(status -> {
             em.createQuery("INSERT INTO user (name, email, phoneNumber, password, role) VALUES (:name, :email, :phoneNumber, :password, :role)")
@@ -32,10 +39,7 @@ class AuthControllerTest extends IntegrationTest {
     }
 
     private String createRandomEmail() {
-        return (new Random()).ints(10, 48, 122)
-                .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
-                .mapToObj(c -> String.valueOf((char) c))
-                .collect(Collectors.joining()) + "@example.com";
+        return RandomString.generateEngDigit(30) + "@example.com";
     }
 
     private String createRandomPhoneNumber() {
@@ -190,6 +194,60 @@ class AuthControllerTest extends IntegrationTest {
                     .then()
                     .statusCode(400)
                     .body("message", equalTo("AUTHENTICATION_FAILED"))
+                    .body("data", equalTo(null));
+        }
+    }
+
+    @Nested
+    class reissue {
+        private String createToken(String secret, long expiration) {
+            return Jwts.builder()
+                    .setSubject(createRandomEmail())
+                    .signWith(Keys.hmacShaKeyFor(secret.getBytes()))
+                    .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                    .compact();
+        }
+
+        @Test
+        void reissue_성공() {
+            given().contentType(ContentType.JSON)
+                    .body(AuthDTO.TokenReissueRequest.builder()
+                            .refreshToken(createToken(refreshTokenSecret, 10000))
+                            .build())
+                    .when()
+                    .post("/auth/token/reissue")
+                    .then()
+                    .statusCode(200)
+                    .body("message", equalTo("OK"))
+                    .body("data.accessToken", any(String.class));
+        }
+
+
+        @Test
+        void reissue_만료_실패() {
+            given().contentType(ContentType.JSON)
+                    .body(AuthDTO.TokenReissueRequest.builder()
+                            .refreshToken(createToken(refreshTokenSecret, -1000))
+                            .build())
+                    .when()
+                    .post("/auth/token/reissue")
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("EXPIRED_REFRESH_TOKEN"))
+                    .body("data", equalTo(null));
+        }
+
+        @Test
+        void reissue_잘못된_토큰_실패() {
+            given().contentType(ContentType.JSON)
+                    .body(AuthDTO.TokenReissueRequest.builder()
+                            .refreshToken(createToken(RandomString.generateEngDigit(40).toLowerCase(), 10000))
+                            .build())
+                    .when()
+                    .post("/auth/token/reissue")
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("INVALID_REFRESH_TOKEN"))
                     .body("data", equalTo(null));
         }
     }

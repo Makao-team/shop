@@ -1,5 +1,7 @@
 package kr.co.shop.makao.service;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import kr.co.shop.makao.dto.AuthDTO;
 import kr.co.shop.makao.response.CommonException;
 import lombok.RequiredArgsConstructor;
@@ -29,5 +31,20 @@ public class AuthService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+
+    public AuthDTO.TokenReissueResponse reissue(AuthDTO.TokenReissueRequest dto) {
+        try {
+            String email = authTokenManager.getSubjectFromRefreshToken(dto.refreshToken());
+            String accessToken = authTokenManager.createAccessToken(email);
+
+            return AuthDTO.TokenReissueResponse.builder()
+                    .accessToken(accessToken)
+                    .build();
+        } catch (ExpiredJwtException cause) {
+            throw CommonException.BAD_REQUEST.toException("EXPIRED_REFRESH_TOKEN", cause);
+        } catch (SignatureException cause) {
+            throw CommonException.BAD_REQUEST.toException("INVALID_REFRESH_TOKEN", cause);
+        }
     }
 }

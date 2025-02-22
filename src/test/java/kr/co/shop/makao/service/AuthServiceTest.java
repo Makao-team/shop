@@ -68,4 +68,39 @@ class AuthServiceTest {
             assertThat(exception.getMessage()).isEqualTo("AUTHENTICATION_FAILED");
         }
     }
+
+    @Nested
+    class reissue {
+        AuthDTO.TokenReissueRequest dto = AuthDTO.TokenReissueRequest.builder()
+                .refreshToken("refreshToken")
+                .build();
+
+        @Test
+        void reissue_성공() {
+            when(authTokenManager.getSubjectFromRefreshToken(dto.refreshToken())).thenReturn("email");
+            when(authTokenManager.createAccessToken("email")).thenReturn("accessToken");
+
+            var res = AuthDTO.TokenReissueResponse.builder()
+                    .accessToken("accessToken")
+                    .build();
+
+            assertThat(authService.reissue(dto)).isEqualTo(res);
+        }
+
+        @Test
+        void reissue_만료된_토큰() {
+            when(authTokenManager.getSubjectFromRefreshToken(dto.refreshToken())).thenThrow(new io.jsonwebtoken.ExpiredJwtException(null, null, "message"));
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> authService.reissue(dto));
+            assertThat(exception.getMessage()).isEqualTo("EXPIRED_REFRESH_TOKEN");
+        }
+
+        @Test
+        void reissue_잘못된_토큰() {
+            when(authTokenManager.getSubjectFromRefreshToken(dto.refreshToken())).thenThrow(new io.jsonwebtoken.security.SignatureException("message"));
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> authService.reissue(dto));
+            assertThat(exception.getMessage()).isEqualTo("INVALID_REFRESH_TOKEN");
+        }
+    }
 }
