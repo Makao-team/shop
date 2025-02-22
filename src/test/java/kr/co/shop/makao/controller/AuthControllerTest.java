@@ -4,6 +4,7 @@ import io.restassured.http.ContentType;
 import kr.co.shop.makao.config.PostgreInitializer;
 import kr.co.shop.makao.dto.AuthDTO;
 import kr.co.shop.makao.enums.UserRole;
+import kr.co.shop.makao.util.StringEncoder;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
@@ -12,10 +13,24 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 
 @ContextConfiguration(initializers = PostgreInitializer.class)
 class AuthControllerTest extends IntegrationTest {
+    private void insertUser(String name, String email, String phoneNumber, String password, UserRole role) {
+        transactionTemplate.execute(status -> {
+            em.createQuery("INSERT INTO user (name, email, phoneNumber, password, role) VALUES (:name, :email, :phoneNumber, :password, :role)")
+                    .setParameter("name", name)
+                    .setParameter("email", email)
+                    .setParameter("phoneNumber", phoneNumber)
+                    .setParameter("password", StringEncoder.encode(password))
+                    .setParameter("role", role)
+                    .executeUpdate();
+            return null;
+        });
+    }
+
     private String createRandomEmail() {
         return (new Random()).ints(10, 48, 122)
                 .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
@@ -116,6 +131,65 @@ class AuthControllerTest extends IntegrationTest {
                     .then()
                     .statusCode(400)
                     .body("message", equalTo("INVALID_PASSWORD"))
+                    .body("data", equalTo(null));
+        }
+    }
+
+    @Nested
+    class signIn {
+        @Test
+        void signIn_성공() {
+            var dto = createRequest(createRandomEmail(), createRandomPhoneNumber());
+
+            insertUser(dto.name(), dto.email(), dto.phoneNumber(), dto.password(), dto.role());
+
+            given().contentType(ContentType.JSON)
+                    .body(AuthDTO.SignInRequest.builder()
+                            .email(dto.email())
+                            .password(dto.password())
+                            .build())
+                    .when()
+                    .post("/auth/sign-in")
+                    .then()
+                    .statusCode(200)
+                    .body("message", equalTo("OK"))
+                    .body("data.accessToken", any(String.class))
+                    .body("data.refreshToken", any(String.class));
+        }
+
+        @Test
+        void signIn_실패_이메일_존재하지_않음() {
+            var dto = createRequest(createRandomEmail(), createRandomPhoneNumber());
+
+            given().contentType(ContentType.JSON)
+                    .body(AuthDTO.SignInRequest.builder()
+                            .email(dto.email())
+                            .password(dto.password())
+                            .build())
+                    .when()
+                    .post("/auth/sign-in")
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("USER_NOT_FOUND"))
+                    .body("data", equalTo(null));
+        }
+
+        @Test
+        void signIn_실패_비밀번호_불일치() {
+            var dto = createRequest(createRandomEmail(), createRandomPhoneNumber());
+
+            insertUser(dto.name(), dto.email(), dto.phoneNumber(), dto.password(), dto.role());
+
+            given().contentType(ContentType.JSON)
+                    .body(AuthDTO.SignInRequest.builder()
+                            .email(dto.email())
+                            .password("wrongpassword123!")
+                            .build())
+                    .when()
+                    .post("/auth/sign-in")
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("AUTHENTICATION_FAILED"))
                     .body("data", equalTo(null));
         }
     }
