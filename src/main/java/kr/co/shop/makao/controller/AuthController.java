@@ -20,7 +20,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/sign-up")
-    ResponseEntity<CommonResponse<Void>> createProduct(@RequestBody @Valid AuthDTO.SignUpRequest dto) {
+    ResponseEntity<CommonResponse<Void>> signUp(@RequestBody @Valid AuthDTO.SignUpRequest dto) {
         authService.signUp(dto);
         return CommonResponse.success(null);
     }
