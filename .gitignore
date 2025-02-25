@@ -38,3 +38,4 @@ out/
 
 ### Config ###
 application-prod-db.yml
+application-prod-secret.yml

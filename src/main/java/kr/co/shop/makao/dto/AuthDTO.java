@@ -23,4 +23,32 @@ public record AuthDTO() {
             UserRole role
     ) {
     }
+
+    @Builder
+    public record SignInRequest(
+            @Email(message = "INVALID_EMAIL")
+            String email,
+            @Password
+            String password
+    ) {
+    }
+
+    @Builder
+    public record SignInResponse(
+            String accessToken,
+            String refreshToken,
+            UserRole role
+    ) {
+    }
+
+    @Builder
+    public record TokenReissueRequest(
+            @NotBlank(message = "INVALID_REFRESH_TOKEN")
+            String refreshToken
+    ) {
+    }
+
+    @Builder
+    public record TokenReissueResponse(String accessToken, String refreshToken) {
+    }
 }

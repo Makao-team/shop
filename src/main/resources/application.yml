@@ -3,8 +3,8 @@ spring:
     name: makao-shop
 
   profiles:
-    include: local-db
-    active: prod-db
+    include: local-db, local-secret
+    active: prod-db, prod-secret
 
   jpa:
     show-sql: true
