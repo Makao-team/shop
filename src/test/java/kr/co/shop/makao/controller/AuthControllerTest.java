@@ -7,6 +7,7 @@ import kr.co.shop.makao.component.JwtAlgorithmProvider;
 import kr.co.shop.makao.config.AuthProperties;
 import kr.co.shop.makao.config.PostgreInitializer;
 import kr.co.shop.makao.dto.AuthDTO;
+import kr.co.shop.makao.dto.UserDTO;
 import kr.co.shop.makao.enums.UserRole;
 import kr.co.shop.makao.util.RandomString;
 import kr.co.shop.makao.util.StringEncoder;
@@ -50,97 +51,14 @@ class AuthControllerTest extends IntegrationTest {
         return "010-" + new Random().nextInt(10000) + "-" + new Random().nextInt(10000);
     }
 
-    private AuthDTO.SignUpRequest createRequest(String email, String phoneNumber) {
-        return AuthDTO.SignUpRequest.builder()
+    private UserDTO.SaveRequest createRequest(String email, String phoneNumber) {
+        return UserDTO.SaveRequest.builder()
                 .name("name")
                 .email(email)
                 .phoneNumber(phoneNumber)
                 .password("password123!")
                 .role(UserRole.CUSTOMER)
                 .build();
-    }
-
-    @Nested
-    class signUp {
-        @Test
-        void signUp_성공() {
-            given().contentType(ContentType.JSON)
-                    .body(createRequest(createRandomEmail(), createRandomPhoneNumber()))
-                    .when()
-                    .post("/auth/sign-up")
-                    .then()
-                    .statusCode(200)
-                    .body("message", equalTo("OK"))
-                    .body("data", equalTo(null));
-        }
-
-        @Test
-        void signUp_실패_이메일_중복() {
-            var email = createRandomEmail();
-
-            given().contentType(ContentType.JSON)
-                    .body(createRequest(email, createRandomPhoneNumber()))
-                    .when()
-                    .post("/auth/sign-up")
-                    .then()
-                    .statusCode(200)
-                    .body("message", equalTo("OK"))
-                    .body("data", equalTo(null));
-
-
-            given().contentType(ContentType.JSON)
-                    .body(createRequest(email, createRandomPhoneNumber()))
-                    .when()
-                    .post("/auth/sign-up")
-                    .then()
-                    .statusCode(400)
-                    .body("message", equalTo("EMAIL_DUPLICATED"))
-                    .body("data", equalTo(null));
-        }
-
-        @Test
-        void signUp_실패_전화번호_중복() {
-            var phoneNumber = createRandomPhoneNumber();
-
-            given().contentType(ContentType.JSON)
-                    .body(createRequest(createRandomEmail(), phoneNumber))
-                    .when()
-                    .post("/auth/sign-up")
-                    .then()
-                    .statusCode(200)
-                    .body("message", equalTo("OK"))
-                    .body("data", equalTo(null));
-
-
-            given().contentType(ContentType.JSON)
-                    .body(createRequest(createRandomEmail(), phoneNumber))
-                    .when()
-                    .post("/auth/sign-up")
-                    .then()
-                    .statusCode(400)
-                    .body("message", equalTo("PHONE_NUMBER_DUPLICATED"))
-                    .body("data", equalTo(null));
-        }
-
-        @Test
-        void signUp_실패_비밀번호_형식_오류() {
-            var request = AuthDTO.SignUpRequest.builder()
-                    .name("name")
-                    .email("test@example.com")
-                    .phoneNumber("010-1234-5678")
-                    .password("password123")
-                    .role(UserRole.CUSTOMER)
-                    .build();
-
-            given().contentType(ContentType.JSON)
-                    .body(request)
-                    .when()
-                    .post("/auth/sign-up")
-                    .then()
-                    .statusCode(400)
-                    .body("message", equalTo("INVALID_PASSWORD"))
-                    .body("data", equalTo(null));
-        }
     }
 
     @Nested

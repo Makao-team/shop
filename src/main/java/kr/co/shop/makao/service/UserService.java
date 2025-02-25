@@ -1,6 +1,6 @@
 package kr.co.shop.makao.service;
 
-import kr.co.shop.makao.dto.AuthDTO;
+import kr.co.shop.makao.dto.UserDTO;
 import kr.co.shop.makao.entity.User;
 import kr.co.shop.makao.repository.UserRepository;
 import kr.co.shop.makao.response.CommonException;
@@ -15,7 +15,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
-    public void save(AuthDTO.SignUpRequest dto) {
+    public void save(UserDTO.SaveRequest dto) {
         var exists = userRepository.existsEmailAndPhoneNumber(dto.email(), dto.phoneNumber());
         if (exists.getEmailExists())
             throw CommonException.BAD_REQUEST.toException("EMAIL_DUPLICATED");
