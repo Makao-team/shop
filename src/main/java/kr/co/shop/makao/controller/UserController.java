@@ -24,4 +24,9 @@ public class UserController {
         userService.save(dto);
         return CommonResponse.success(null);
     }
+
+    @PostMapping("/sign-in")
+    ResponseEntity<CommonResponse<UserDTO.SignInResponse>> signIn(@RequestBody @Valid UserDTO.SignInRequest dto) {
+        return CommonResponse.success(userService.signIn(dto));
+    }
 }

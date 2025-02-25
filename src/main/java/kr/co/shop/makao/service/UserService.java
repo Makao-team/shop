@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final AuthService authService;
 
     @Transactional
     public void save(UserDTO.SaveRequest dto) {
@@ -34,8 +35,18 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
+    public UserDTO.SignInResponse signIn(UserDTO.SignInRequest dto) {
+        User user = userRepository.findByEmail(dto.email())
                 .orElseThrow(() -> CommonException.BAD_REQUEST.toException("USER_NOT_FOUND"));
+
+        if (!StringEncoder.match(dto.password(), user.getPassword()))
+            throw CommonException.BAD_REQUEST.toException("AUTHENTICATION_FAILED");
+
+        var tokens = authService.issue(dto.email());
+        return UserDTO.SignInResponse.builder()
+                .accessToken(tokens.accessToken())
+                .refreshToken(tokens.refreshToken())
+                .role(user.getRole())
+                .build();
     }
 }
