@@ -1,9 +1,8 @@
 package kr.co.shop.makao.controller;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import io.restassured.http.ContentType;
-import kr.co.shop.makao.component.JwtAlgorithmProvider;
 import kr.co.shop.makao.config.AuthProperties;
 import kr.co.shop.makao.config.PostgreInitializer;
 import kr.co.shop.makao.dto.AuthDTO;
@@ -22,8 +21,6 @@ import static org.hamcrest.Matchers.equalTo;
 @ContextConfiguration(initializers = PostgreInitializer.class)
 class AuthControllerTest extends IntegrationTest {
     @Autowired
-    private JwtAlgorithmProvider jwtAlgorithmProvider;
-    @Autowired
     private AuthProperties authProperties;
 
     private String createRandomEmail() {
@@ -32,19 +29,18 @@ class AuthControllerTest extends IntegrationTest {
 
     @Nested
     class reissue {
-        private String createToken(String secret, long expiration) {
-            return Jwts.builder()
-                    .setSubject(createRandomEmail())
-                    .signWith(Keys.hmacShaKeyFor(secret.getBytes()), jwtAlgorithmProvider.provide())
-                    .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                    .compact();
+        private String createToken(Algorithm algorithm, long expiration) {
+            return JWT.create()
+                    .withSubject(createRandomEmail())
+                    .withExpiresAt(new Date(System.currentTimeMillis() + expiration))
+                    .sign(algorithm);
         }
 
         @Test
         void reissue_성공() {
             given().contentType(ContentType.JSON)
                     .body(AuthDTO.TokenReissueRequest.builder()
-                            .refreshToken(createToken(authProperties.getRefreshTokenSecret(), 10000))
+                            .refreshToken(createToken(authProperties.getRefreshTokenAlgorithm(), 10000))
                             .build())
                     .when()
                     .post("/auth/token/reissue")
@@ -59,7 +55,7 @@ class AuthControllerTest extends IntegrationTest {
         void reissue_만료_실패() {
             given().contentType(ContentType.JSON)
                     .body(AuthDTO.TokenReissueRequest.builder()
-                            .refreshToken(createToken(authProperties.getRefreshTokenSecret(), -1000))
+                            .refreshToken(createToken(authProperties.getRefreshTokenAlgorithm(), -1000))
                             .build())
                     .when()
                     .post("/auth/token/reissue")
@@ -73,7 +69,7 @@ class AuthControllerTest extends IntegrationTest {
         void reissue_잘못된_토큰_실패() {
             given().contentType(ContentType.JSON)
                     .body(AuthDTO.TokenReissueRequest.builder()
-                            .refreshToken(createToken(RandomString.generateEngDigit(40), 10000))
+                            .refreshToken(createToken(Algorithm.none(), 10000))
                             .build())
                     .when()
                     .post("/auth/token/reissue")

@@ -1,10 +1,10 @@
 package kr.co.shop.makao.component;
 
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.auth0.jwt.algorithms.Algorithm;
 
 public class TestJwtAlgorithmProviderImpl implements JwtAlgorithmProvider {
     @Override
-    public SignatureAlgorithm provide() {
-        return SignatureAlgorithm.HS256;
+    public Algorithm provideHmacSha(String secret) {
+        return Algorithm.none();
     }
 }
