@@ -38,9 +38,9 @@ public class AuthTokenManager {
                     .role(jwt.getClaim("role").asString())
                     .build();
         } catch (TokenExpiredException cause) {
-            throw CommonException.BAD_REQUEST.toException("EXPIRED_REFRESH_TOKEN", cause);
+            throw CommonException.BAD_REQUEST.toException("EXPIRED_" + tokenType.name(), cause);
         } catch (Exception cause) {
-            throw CommonException.BAD_REQUEST.toException("INVALID_REFRESH_TOKEN", cause);
+            throw CommonException.BAD_REQUEST.toException("INVALID_" + tokenType.name(), cause);
         }
     }
 }
