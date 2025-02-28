@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 public class User extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private long id;
 
     @Column(nullable = false)
     private String name;
