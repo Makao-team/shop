@@ -9,9 +9,11 @@ public enum CommonException {
     BAD_REQUEST(HttpStatus.BAD_REQUEST),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED),
     IMAGE_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR),
-    AUTH_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR);
+    AUTH_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR),
+    FORBIDDEN(HttpStatus.FORBIDDEN);
 
     private final HttpStatus status;
+
 
     public CommonExceptionImpl toException(String message) {
         return new CommonExceptionImpl(status, message);

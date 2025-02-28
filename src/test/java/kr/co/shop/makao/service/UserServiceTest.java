@@ -8,6 +8,7 @@ import kr.co.shop.makao.repository.ExistsEmailAndPhoneNumber;
 import kr.co.shop.makao.repository.UserRepository;
 import kr.co.shop.makao.response.CommonExceptionImpl;
 import kr.co.shop.makao.util.StringEncoder;
+import kr.co.shop.makao.vo.AuthUser;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,7 +80,7 @@ class UserServiceTest {
                 .email("email")
                 .password("password123!")
                 .build();
-        User user = User.builder().password("hashed").build();
+        User user = User.builder().password("hashed").role(UserRole.CUSTOMER).build();
         AuthDTO.TokenIssueResponse tokens = AuthDTO.TokenIssueResponse.builder().accessToken("accessToken").refreshToken("refreshToken").build();
 
         @Test
@@ -88,15 +89,12 @@ class UserServiceTest {
             try (var stringEncoderMockedStatic = mockStatic(StringEncoder.class)) {
                 stringEncoderMockedStatic.when(() -> StringEncoder.match(dto.password(), user.getPassword())).thenReturn(true);
 
-                when(authService.issue(dto.email())).thenReturn(tokens);
+                AuthUser payload = AuthUser.builder().subject(dto.email()).role(user.getRole().getValue()).build();
+                when(authService.issue(payload)).thenReturn(tokens);
 
-                var res = UserDTO.SignInResponse.builder()
-                        .accessToken("accessToken")
-                        .refreshToken("refreshToken")
-                        .role(user.getRole())
-                        .build();
-
-                assertThat(userService.signIn(dto)).isEqualTo(res);
+                assertThat(userService.signIn(dto).role()).isEqualTo(user.getRole());
+                assertThat(userService.signIn(dto).accessToken()).isEqualTo(tokens.accessToken());
+                assertThat(userService.signIn(dto).refreshToken()).isEqualTo(tokens.refreshToken());
             }
         }
 

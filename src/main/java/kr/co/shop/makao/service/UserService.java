@@ -5,6 +5,7 @@ import kr.co.shop.makao.entity.User;
 import kr.co.shop.makao.repository.UserRepository;
 import kr.co.shop.makao.response.CommonException;
 import kr.co.shop.makao.util.StringEncoder;
+import kr.co.shop.makao.vo.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +43,10 @@ public class UserService {
         if (!StringEncoder.match(dto.password(), user.getPassword()))
             throw CommonException.BAD_REQUEST.toException("AUTHENTICATION_FAILED");
 
-        var tokens = authService.issue(dto.email());
+        var tokens = authService.issue(AuthUser.builder()
+                .subject(dto.email())
+                .role(user.getRole().getValue())
+                .build());
         return UserDTO.SignInResponse.builder()
                 .accessToken(tokens.accessToken())
                 .refreshToken(tokens.refreshToken())
