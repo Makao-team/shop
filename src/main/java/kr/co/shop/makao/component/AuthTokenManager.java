@@ -1,37 +1,51 @@
 package kr.co.shop.makao.component;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.exceptions.TokenExpiredException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import kr.co.shop.makao.config.AuthProperties;
 import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.response.CommonException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 
-@RequiredArgsConstructor
 @Component
 public class AuthTokenManager {
     private final AuthProperties authProperties;
+    private final Key accessTokenKey;
+    private final Key refreshTokenKey;
+    private final JwtAlgorithmProvider jwtAlgorithmProvider;
+
+    public AuthTokenManager(AuthProperties authProperties, JwtAlgorithmProvider jwtAlgorithmProvider) {
+        this.authProperties = authProperties;
+        this.jwtAlgorithmProvider = jwtAlgorithmProvider;
+        this.accessTokenKey = Keys.hmacShaKeyFor(authProperties.getAccessTokenSecret().getBytes(StandardCharsets.UTF_8));
+        this.refreshTokenKey = Keys.hmacShaKeyFor(authProperties.getRefreshTokenSecret().getBytes(StandardCharsets.UTF_8));
+    }
 
     public String create(String subject, TokenType tokenType) {
-        var algorithm = tokenType == TokenType.ACCESS_TOKEN ? authProperties.getAccessTokenAlgorithm() : authProperties.getRefreshTokenAlgorithm();
+        var key = tokenType == TokenType.ACCESS_TOKEN ? accessTokenKey : refreshTokenKey;
         var expiration = tokenType == TokenType.ACCESS_TOKEN ? authProperties.getAccessTokenExpiration() : authProperties.getRefreshTokenExpiration();
-        return JWT.create()
-                .withSubject(subject)
-                .withExpiresAt(new Date(System.currentTimeMillis() + expiration))
-                .sign(algorithm);
+        return Jwts.builder()
+                .setSubject(subject)
+                .signWith(key, jwtAlgorithmProvider.provide())
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .compact();
     }
 
     public String getSubject(String token, TokenType tokenType) {
         try {
-            var algorithm = tokenType == TokenType.ACCESS_TOKEN ? authProperties.getAccessTokenAlgorithm() : authProperties.getRefreshTokenAlgorithm();
-            return JWT.require(algorithm)
+            var key = tokenType == TokenType.ACCESS_TOKEN ? accessTokenKey : refreshTokenKey;
+            return Jwts.parserBuilder()
+                    .setSigningKey(key)
                     .build()
-                    .verify(token)
+                    .parseClaimsJws(token)
+                    .getBody()
                     .getSubject();
-        } catch (TokenExpiredException cause) {
+        } catch (ExpiredJwtException cause) {
             throw CommonException.BAD_REQUEST.toException("EXPIRED_REFRESH_TOKEN", cause);
         } catch (Exception cause) {
             throw CommonException.BAD_REQUEST.toException("INVALID_REFRESH_TOKEN", cause);

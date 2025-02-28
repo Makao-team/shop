@@ -7,10 +7,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
 @TestConfiguration
-public class TestAuthConfig {
+public class AuthConfig {
     @Primary
     @Bean
-    public JwtAlgorithmProvider testJwtAlgorithmProvider() {
+    public JwtAlgorithmProvider jwtAlgorithmProvider() {
         return new TestJwtAlgorithmProviderImpl();
     }
 }
