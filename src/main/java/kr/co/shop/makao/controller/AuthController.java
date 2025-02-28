@@ -19,17 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthService authService;
 
-    @PostMapping("/sign-up")
-    ResponseEntity<CommonResponse<Void>> createProduct(@RequestBody @Valid AuthDTO.SignUpRequest dto) {
-        authService.signUp(dto);
-        return CommonResponse.success(null);
-    }
-
-    @PostMapping("/sign-in")
-    ResponseEntity<CommonResponse<AuthDTO.SignInResponse>> signIn(@RequestBody @Valid AuthDTO.SignInRequest dto) {
-        return CommonResponse.success(authService.signIn(dto));
-    }
-
     @PostMapping("/token/reissue")
     ResponseEntity<CommonResponse<AuthDTO.TokenReissueResponse>> reissue(@RequestBody @Valid AuthDTO.TokenReissueRequest dto) {
         return CommonResponse.success(authService.reissue(dto));

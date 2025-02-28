@@ -1,7 +1,10 @@
 package kr.co.shop.makao.component;
 
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.auth0.jwt.algorithms.Algorithm;
 
 public interface JwtAlgorithmProvider {
-    SignatureAlgorithm provide();
+    /**
+     * Generate a key according to the algorithm using the secret and return the algorithm
+     */
+    Algorithm provideHmacSha(String secret);
 }

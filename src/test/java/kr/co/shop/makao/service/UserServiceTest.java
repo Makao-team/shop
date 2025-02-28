@@ -1,11 +1,13 @@
 package kr.co.shop.makao.service;
 
 import kr.co.shop.makao.dto.AuthDTO;
+import kr.co.shop.makao.dto.UserDTO;
 import kr.co.shop.makao.entity.User;
 import kr.co.shop.makao.enums.UserRole;
 import kr.co.shop.makao.repository.ExistsEmailAndPhoneNumber;
 import kr.co.shop.makao.repository.UserRepository;
 import kr.co.shop.makao.response.CommonExceptionImpl;
+import kr.co.shop.makao.util.StringEncoder;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +20,7 @@ import java.util.Optional;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,10 +31,12 @@ class UserServiceTest {
     private UserRepository userRepository;
     @Mock
     private ExistsEmailAndPhoneNumber existsEmailAndPhoneNumber;
+    @Mock
+    private AuthService authService;
 
     @Nested
     class save {
-        AuthDTO.SignUpRequest dto = AuthDTO.SignUpRequest.builder()
+        UserDTO.SaveRequest dto = UserDTO.SaveRequest.builder()
                 .name("name")
                 .email("email")
                 .phoneNumber("phoneNumber")
@@ -69,21 +74,47 @@ class UserServiceTest {
     }
 
     @Nested
-    class findByEmail {
-        @Test
-        void findByEmail_성공() {
-            when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(User.builder().password("password123!").build()));
+    class SignIn {
+        UserDTO.SignInRequest dto = UserDTO.SignInRequest.builder()
+                .email("email")
+                .password("password123!")
+                .build();
+        User user = User.builder().password("hashed").build();
+        AuthDTO.TokenIssueResponse tokens = AuthDTO.TokenIssueResponse.builder().accessToken("accessToken").refreshToken("refreshToken").build();
 
-            var user = userService.findByEmail("email");
-            assertThat(user.getPassword()).isEqualTo("password123!");
+        @Test
+        void signIn_성공() {
+            when(userRepository.findByEmail(dto.email())).thenReturn(Optional.of(user));
+            try (var stringEncoderMockedStatic = mockStatic(StringEncoder.class)) {
+                stringEncoderMockedStatic.when(() -> StringEncoder.match(dto.password(), user.getPassword())).thenReturn(true);
+
+                when(authService.issue(dto.email())).thenReturn(tokens);
+
+                var res = UserDTO.SignInResponse.builder()
+                        .accessToken("accessToken")
+                        .refreshToken("refreshToken")
+                        .role(user.getRole())
+                        .build();
+
+                assertThat(userService.signIn(dto)).isEqualTo(res);
+            }
         }
 
         @Test
-        void findByEmail_이메일_없음_실패() {
-            when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+        void signIn_이메일_없음_실패() {
+            when(userRepository.findByEmail(dto.email())).thenReturn(Optional.empty());
+            var exception = assertThrows(CommonExceptionImpl.class, () -> userService.signIn(dto));
+            assertThat(exception.getMessage()).isEqualTo("USER_NOT_FOUND");
+        }
 
-            var exception = assertThrows(CommonExceptionImpl.class, () -> userService.findByEmail("email"));
-            assert exception.getMessage().equals("USER_NOT_FOUND");
+        @Test
+        void signIn_패스워드_불일치_실패() {
+            when(userRepository.findByEmail(dto.email())).thenReturn(Optional.of(user));
+            try (var stringEncoderMockedStatic = mockStatic(StringEncoder.class)) {
+                stringEncoderMockedStatic.when(() -> StringEncoder.match(dto.password(), user.getPassword())).thenReturn(false);
+                var exception = assertThrows(CommonExceptionImpl.class, () -> userService.signIn(dto));
+                assertThat(exception.getMessage()).isEqualTo("AUTHENTICATION_FAILED");
+            }
         }
     }
 }

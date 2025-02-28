@@ -1,6 +1,6 @@
 package kr.co.shop.makao.service;
 
-import kr.co.shop.makao.dto.AuthDTO;
+import kr.co.shop.makao.dto.UserDTO;
 import kr.co.shop.makao.entity.User;
 import kr.co.shop.makao.repository.UserRepository;
 import kr.co.shop.makao.response.CommonException;
@@ -13,9 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final AuthService authService;
 
     @Transactional
-    public void save(AuthDTO.SignUpRequest dto) {
+    public void save(UserDTO.SaveRequest dto) {
         var exists = userRepository.existsEmailAndPhoneNumber(dto.email(), dto.phoneNumber());
         if (exists.getEmailExists())
             throw CommonException.BAD_REQUEST.toException("EMAIL_DUPLICATED");
@@ -34,8 +35,18 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
+    public UserDTO.SignInResponse signIn(UserDTO.SignInRequest dto) {
+        User user = userRepository.findByEmail(dto.email())
                 .orElseThrow(() -> CommonException.BAD_REQUEST.toException("USER_NOT_FOUND"));
+
+        if (!StringEncoder.match(dto.password(), user.getPassword()))
+            throw CommonException.BAD_REQUEST.toException("AUTHENTICATION_FAILED");
+
+        var tokens = authService.issue(dto.email());
+        return UserDTO.SignInResponse.builder()
+                .accessToken(tokens.accessToken())
+                .refreshToken(tokens.refreshToken())
+                .role(user.getRole())
+                .build();
     }
 }
