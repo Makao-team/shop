@@ -7,6 +7,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @ControllerAdvice
 @Slf4j
@@ -33,6 +34,12 @@ public class GlobalControllerAdvice {
     public ResponseEntity<CommonResponse<String>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         log.info(e.getMessage(), e);
         return CommonResponse.error(HttpStatus.BAD_REQUEST, e.getCause().getCause().getMessage());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<CommonResponse<String>> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.info(e.getMessage(), e);
+        return CommonResponse.error(HttpStatus.NOT_FOUND, "NOT_FOUND");
     }
 }
 
