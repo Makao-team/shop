@@ -13,4 +13,17 @@ public class TestAuthConfig {
     public JwtAlgorithmProvider testJwtAlgorithmProvider() {
         return new TestJwtAlgorithmProviderImpl();
     }
+
+    @Primary
+    @Bean
+    public AuthProperties testAuthProperties(JwtAlgorithmProvider jwtAlgorithmProvider) {
+        return new AuthProperties(
+                "test-access-token-secret",
+                "60*1000",
+                "test-refresh-token-secret",
+                "60*60*1000",
+                "false",
+                jwtAlgorithmProvider
+        );
+    }
 }
