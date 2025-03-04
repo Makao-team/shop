@@ -3,7 +3,6 @@ package kr.co.shop.makao.resolver;
 import kr.co.shop.makao.component.AuthTokenManager;
 import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.enums.UserRole;
-import kr.co.shop.makao.filter.Available;
 import kr.co.shop.makao.response.CommonException;
 import kr.co.shop.makao.vo.AuthUser;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +21,7 @@ public class AuthHandlerMethodArgumentResolver implements HandlerMethodArgumentR
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterType().equals(AuthUser.class)
-                && parameter.hasParameterAnnotation(JwtPayload.class);
+        return Objects.requireNonNull(parameter.getMethod()).getAnnotation(Available.class) != null;
     }
 
     @Override
@@ -33,7 +31,7 @@ public class AuthHandlerMethodArgumentResolver implements HandlerMethodArgumentR
             NativeWebRequest webRequest,
             WebDataBinderFactory binderFactory
     ) {
-        var token = Objects.requireNonNull(webRequest).getHeader("Authorization");
+        var token = Objects.requireNonNull(webRequest.getHeader("Authorization"));
         var payload = authTokenManager.getPayload(token.substring(7), TokenType.ACCESS_TOKEN);
 
         var available = Objects.requireNonNull(parameter.getMethod()).getAnnotation(Available.class);
