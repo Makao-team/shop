@@ -4,9 +4,11 @@ import jakarta.persistence.*;
 import kr.co.shop.makao.entity.base.Auditable;
 import kr.co.shop.makao.entity.converter.ProductStatusConverter;
 import kr.co.shop.makao.enums.ProductStatus;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+@Getter
 @NoArgsConstructor
 @SuperBuilder
 @Entity(name = "product")

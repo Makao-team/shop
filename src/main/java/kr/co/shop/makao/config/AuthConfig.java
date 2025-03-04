@@ -19,7 +19,7 @@ public class AuthConfig {
 
         FilterRegistrationBean<AuthFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(authFilter);
-        registrationBean.addUrlPatterns("/not-working");
+        registrationBean.addUrlPatterns("/products/*");
         registrationBean.setOrder(1);
         return registrationBean;
     }
