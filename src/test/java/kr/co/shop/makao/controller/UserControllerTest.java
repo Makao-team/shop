@@ -4,28 +4,16 @@ import io.restassured.http.ContentType;
 import kr.co.shop.makao.config.PostgreInitializer;
 import kr.co.shop.makao.dto.UserDTO;
 import kr.co.shop.makao.enums.UserRole;
-import kr.co.shop.makao.util.RandomString;
-import kr.co.shop.makao.util.StringEncoder;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ContextConfiguration;
-
-import java.util.Random;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 
 @ContextConfiguration(initializers = PostgreInitializer.class)
-class UserControllerTest extends IntegrationTest {
-    private String createRandomEmail() {
-        return RandomString.generateEngDigit(30) + "@example.com";
-    }
-
-    private String createRandomPhoneNumber() {
-        return "010-" + new Random().nextInt(10000) + "-" + new Random().nextInt(10000);
-    }
-
+class UserControllerTest extends BaseIntegrationTest {
     private UserDTO.SaveRequest createRequest(String email, String phoneNumber) {
         return UserDTO.SaveRequest.builder()
                 .name("name")
@@ -36,20 +24,6 @@ class UserControllerTest extends IntegrationTest {
                 .build();
     }
 
-    private void insertUser(String name, String email, String phoneNumber, String password, UserRole role) {
-        transactionTemplate.execute(status -> {
-            em.createQuery("INSERT INTO user (name, email, phoneNumber, password, role) VALUES (:name, :email, :phoneNumber, :password, :role)")
-                    .setParameter("name", name)
-                    .setParameter("email", email)
-                    .setParameter("phoneNumber", phoneNumber)
-                    .setParameter("password", StringEncoder.encode(password))
-                    .setParameter("role", role)
-                    .executeUpdate();
-            return null;
-        });
-    }
-
-
     @Nested
     class save {
         @Test
@@ -57,7 +31,7 @@ class UserControllerTest extends IntegrationTest {
             given().contentType(ContentType.JSON)
                     .body(createRequest(createRandomEmail(), createRandomPhoneNumber()))
                     .when()
-                    .post("/users/")
+                    .post("/users")
                     .then()
                     .statusCode(200)
                     .body("message", equalTo("OK"))
@@ -71,7 +45,7 @@ class UserControllerTest extends IntegrationTest {
             given().contentType(ContentType.JSON)
                     .body(createRequest(email, createRandomPhoneNumber()))
                     .when()
-                    .post("/users/")
+                    .post("/users")
                     .then()
                     .statusCode(200)
                     .body("message", equalTo("OK"))
@@ -81,7 +55,7 @@ class UserControllerTest extends IntegrationTest {
             given().contentType(ContentType.JSON)
                     .body(createRequest(email, createRandomPhoneNumber()))
                     .when()
-                    .post("/users/")
+                    .post("/users")
                     .then()
                     .statusCode(400)
                     .body("message", equalTo("EMAIL_DUPLICATED"))
@@ -95,7 +69,7 @@ class UserControllerTest extends IntegrationTest {
             given().contentType(ContentType.JSON)
                     .body(createRequest(createRandomEmail(), phoneNumber))
                     .when()
-                    .post("/users/")
+                    .post("/users")
                     .then()
                     .statusCode(200)
                     .body("message", equalTo("OK"))
@@ -105,7 +79,7 @@ class UserControllerTest extends IntegrationTest {
             given().contentType(ContentType.JSON)
                     .body(createRequest(createRandomEmail(), phoneNumber))
                     .when()
-                    .post("/users/")
+                    .post("/users")
                     .then()
                     .statusCode(400)
                     .body("message", equalTo("PHONE_NUMBER_DUPLICATED"))
@@ -125,7 +99,7 @@ class UserControllerTest extends IntegrationTest {
             given().contentType(ContentType.JSON)
                     .body(request)
                     .when()
-                    .post("/users/")
+                    .post("/users")
                     .then()
                     .statusCode(400)
                     .body("message", equalTo("INVALID_PASSWORD"))

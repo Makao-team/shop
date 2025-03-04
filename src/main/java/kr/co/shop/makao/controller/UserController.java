@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     private final UserService userService;
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<CommonResponse<Void>> save(@RequestBody @Valid UserDTO.SaveRequest dto) {
         userService.save(dto);
         return CommonResponse.success(null);
