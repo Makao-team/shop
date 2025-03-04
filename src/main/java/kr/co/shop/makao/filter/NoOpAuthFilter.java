@@ -20,7 +20,6 @@ public class NoOpAuthFilter extends AuthFilter {
             return;
         }
 
-        request.setAttribute("email", email);
         filterChain.doFilter(request, response);
     }
 }

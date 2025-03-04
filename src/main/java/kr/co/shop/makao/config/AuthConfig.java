@@ -35,7 +35,9 @@ public class AuthConfig {
             @Value("${auth.access-token.expiration}") String accessTokenExpiration,
             @Value("${auth.refresh-token.secret}") String refreshTokenSecret,
             @Value("${auth.refresh-token.expiration}") String refreshTokenExpiration,
-            @Value("${auth.is-dev-env}") String isDevEnv) {
-        return new AuthProperties(accessTokenSecret, accessTokenExpiration, refreshTokenSecret, refreshTokenExpiration, isDevEnv, jwtAlgorithmProvider());
+            @Value("${auth.is-dev-env}") String isDevEnv,
+            JwtAlgorithmProvider jwtAlgorithmProvider
+    ) {
+        return new AuthProperties(accessTokenSecret, accessTokenExpiration, refreshTokenSecret, refreshTokenExpiration, isDevEnv, jwtAlgorithmProvider);
     }
 }

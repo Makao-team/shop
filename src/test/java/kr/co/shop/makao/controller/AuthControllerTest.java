@@ -6,6 +6,7 @@ import io.restassured.http.ContentType;
 import kr.co.shop.makao.config.AuthProperties;
 import kr.co.shop.makao.config.PostgreInitializer;
 import kr.co.shop.makao.dto.AuthDTO;
+import kr.co.shop.makao.enums.UserRole;
 import kr.co.shop.makao.util.RandomString;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ class AuthControllerTest extends IntegrationTest {
         private String createToken(Algorithm algorithm, long expiration) {
             return JWT.create()
                     .withSubject(createRandomEmail())
+                    .withClaim("role", UserRole.MERCHANT.getValue())
                     .withExpiresAt(new Date(System.currentTimeMillis() + expiration))
                     .sign(algorithm);
         }
@@ -53,6 +55,8 @@ class AuthControllerTest extends IntegrationTest {
 
         @Test
         void reissue_만료_실패() {
+            var df = createToken(authProperties.getRefreshTokenAlgorithm(), -1000);
+
             given().contentType(ContentType.JSON)
                     .body(AuthDTO.TokenReissueRequest.builder()
                             .refreshToken(createToken(authProperties.getRefreshTokenAlgorithm(), -1000))
@@ -69,7 +73,7 @@ class AuthControllerTest extends IntegrationTest {
         void reissue_잘못된_토큰_실패() {
             given().contentType(ContentType.JSON)
                     .body(AuthDTO.TokenReissueRequest.builder()
-                            .refreshToken(createToken(Algorithm.none(), 10000))
+                            .refreshToken(createToken(Algorithm.HMAC384("wrongSecret"), 10000))
                             .build())
                     .when()
                     .post("/auth/token/reissue")

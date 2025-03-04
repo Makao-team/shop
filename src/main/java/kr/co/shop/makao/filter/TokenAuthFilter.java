@@ -1,10 +1,12 @@
 package kr.co.shop.makao.filter;
 
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.co.shop.makao.component.AuthTokenManager;
 import kr.co.shop.makao.enums.TokenType;
+import kr.co.shop.makao.response.CommonExceptionImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,29 +22,23 @@ public class TokenAuthFilter extends AuthFilter {
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
-            FilterChain filterChain) throws IOException {
-        String token = request.getHeader("Authorization");
+            FilterChain filterChain) throws IOException, ServletException {
+        verifyToken(request, response);
+        filterChain.doFilter(request, response);
+    }
+
+    private void verifyToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        var token = request.getHeader("Authorization");
 
         if (token == null || !token.startsWith("Bearer ")) {
             sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "INVALID_TOKEN");
             return;
         }
 
-        token = token.substring(7);
-
         try {
-            String subject = authTokenManager.getSubject(token, TokenType.ACCESS_TOKEN);
-
-            if (subject.isEmpty()) {
-                sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "INVALID_TOKEN");
-                return;
-            }
-
-            request.setAttribute("email", subject);
-            filterChain.doFilter(request, response);
-        } catch (Exception e) {
-            log.info("Invalid token", e);
-            sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "EXPIRED_TOKEN");
+            authTokenManager.getPayload(token.substring(7), TokenType.ACCESS_TOKEN);
+        } catch (CommonExceptionImpl e) {
+            sendErrorResponse(response, HttpStatus.UNAUTHORIZED, e.getMessage());
         }
     }
 }

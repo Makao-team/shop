@@ -3,6 +3,7 @@ package kr.co.shop.makao.service;
 import kr.co.shop.makao.component.AuthTokenManager;
 import kr.co.shop.makao.dto.AuthDTO;
 import kr.co.shop.makao.enums.TokenType;
+import kr.co.shop.makao.vo.AuthUser;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,11 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
+    private final AuthUser payload = AuthUser.builder()
+            .subject("email")
+            .role("role")
+            .build();
+
     @InjectMocks
     private AuthService authService;
     @Mock
@@ -24,10 +30,10 @@ class AuthServiceTest {
     class issue {
         @Test
         void issue_성공() {
-            when(authTokenManager.create("email", TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
-            when(authTokenManager.create("email", TokenType.REFRESH_TOKEN)).thenReturn("refreshToken");
+            when(authTokenManager.create(payload, TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
+            when(authTokenManager.create(payload, TokenType.REFRESH_TOKEN)).thenReturn("refreshToken");
 
-            var tokens = authService.issue("email");
+            var tokens = authService.issue(payload);
             assertThat(tokens.accessToken()).isEqualTo("accessToken");
             assertThat(tokens.refreshToken()).isEqualTo("refreshToken");
         }
@@ -42,8 +48,8 @@ class AuthServiceTest {
 
         @Test
         void reissue_성공() {
-            when(authTokenManager.getSubject(dto.refreshToken(), TokenType.REFRESH_TOKEN)).thenReturn("email");
-            when(authTokenManager.create("email", TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
+            when(authTokenManager.getPayload(dto.refreshToken(), TokenType.REFRESH_TOKEN)).thenReturn(payload);
+            when(authTokenManager.create(payload, TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
 
             assertThat(authService.reissue(dto).accessToken()).isEqualTo("accessToken");
         }

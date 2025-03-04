@@ -8,7 +8,8 @@ import java.util.Arrays;
 
 public enum UserRole {
     MERCHANT("merchant"),
-    CUSTOMER("customer");
+    CUSTOMER("customer"),
+    ADMIN("admin");
 
     private final String value;
 

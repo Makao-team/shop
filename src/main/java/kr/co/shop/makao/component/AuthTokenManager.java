@@ -5,6 +5,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import kr.co.shop.makao.config.AuthProperties;
 import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.response.CommonException;
+import kr.co.shop.makao.vo.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,26 +16,31 @@ import java.util.Date;
 public class AuthTokenManager {
     private final AuthProperties authProperties;
 
-    public String create(String subject, TokenType tokenType) {
+    public String create(AuthUser payload, TokenType tokenType) {
         var algorithm = tokenType == TokenType.ACCESS_TOKEN ? authProperties.getAccessTokenAlgorithm() : authProperties.getRefreshTokenAlgorithm();
         var expiration = tokenType == TokenType.ACCESS_TOKEN ? authProperties.getAccessTokenExpiration() : authProperties.getRefreshTokenExpiration();
         return JWT.create()
-                .withSubject(subject)
+                .withSubject(payload.subject())
+                .withClaim("role", payload.role())
                 .withExpiresAt(new Date(System.currentTimeMillis() + expiration))
                 .sign(algorithm);
     }
 
-    public String getSubject(String token, TokenType tokenType) {
+    public AuthUser getPayload(String token, TokenType tokenType) {
         try {
             var algorithm = tokenType == TokenType.ACCESS_TOKEN ? authProperties.getAccessTokenAlgorithm() : authProperties.getRefreshTokenAlgorithm();
-            return JWT.require(algorithm)
+            var jwt = JWT.require(algorithm)
                     .build()
-                    .verify(token)
-                    .getSubject();
+                    .verify(token);
+
+            return AuthUser.builder()
+                    .subject(jwt.getSubject())
+                    .role(jwt.getClaim("role").asString())
+                    .build();
         } catch (TokenExpiredException cause) {
-            throw CommonException.BAD_REQUEST.toException("EXPIRED_REFRESH_TOKEN", cause);
+            throw CommonException.BAD_REQUEST.toException("EXPIRED_" + tokenType.name(), cause);
         } catch (Exception cause) {
-            throw CommonException.BAD_REQUEST.toException("INVALID_REFRESH_TOKEN", cause);
+            throw CommonException.BAD_REQUEST.toException("INVALID_" + tokenType.name(), cause);
         }
     }
 }

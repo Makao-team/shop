@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Integer> {
+public interface UserRepository extends JpaRepository<User, Long> {
     @Query("""
             SELECT
             CASE WHEN EXISTS (SELECT 1 FROM user u WHERE u.email = :email) THEN true ELSE false END AS emailExists,
