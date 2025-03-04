@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 
-public class NoOpAuthFilter extends AuthFilter {
+public class DevAuthFilter extends AuthFilter {
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
