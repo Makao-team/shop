@@ -40,9 +40,10 @@ public abstract class BaseIntegrationTest extends IntegrationTest {
         return "010-" + new Random().nextInt(10000) + "-" + new Random().nextInt(10000);
     }
 
-    protected String createToken(Algorithm algorithm, long expiration, UserRole role, String email) {
+    protected String createToken(Algorithm algorithm, long expiration, UserRole role, String email, long id) {
         return JWT.create()
                 .withSubject(email)
+                .withClaim("id", id)
                 .withClaim("role", role.getValue())
                 .withExpiresAt(new Date(System.currentTimeMillis() + expiration))
                 .sign(algorithm);

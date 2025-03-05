@@ -30,7 +30,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         void reissue_성공() {
             given().contentType(ContentType.JSON)
                     .body(AuthDTO.TokenReissueRequest.builder()
-                            .refreshToken(createToken(algorithm, 10000, role, email))
+                            .refreshToken(createToken(algorithm, 10000, role, email, 1L))
                             .build())
                     .when()
                     .post("/auth/token/reissue")
@@ -45,7 +45,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         void reissue_만료_실패() {
             given().contentType(ContentType.JSON)
                     .body(AuthDTO.TokenReissueRequest.builder()
-                            .refreshToken(createToken(algorithm, -1000, role, email))
+                            .refreshToken(createToken(algorithm, -1000, role, email, 1L))
                             .build())
                     .when()
                     .post("/auth/token/reissue")
@@ -59,7 +59,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         void reissue_잘못된_토큰_실패() {
             given().contentType(ContentType.JSON)
                     .body(AuthDTO.TokenReissueRequest.builder()
-                            .refreshToken(createToken(Algorithm.HMAC384("wrongSecret"), 10000, role, email))
+                            .refreshToken(createToken(Algorithm.HMAC384("wrongSecret"), 10000, role, email, 1L))
                             .build())
                     .when()
                     .post("/auth/token/reissue")
