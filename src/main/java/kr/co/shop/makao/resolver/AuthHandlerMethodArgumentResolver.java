@@ -1,9 +1,9 @@
 package kr.co.shop.makao.resolver;
 
-import kr.co.shop.makao.component.JwtManager;
 import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.enums.UserRole;
 import kr.co.shop.makao.response.CommonException;
+import kr.co.shop.makao.service.JwtService;
 import kr.co.shop.makao.vo.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
@@ -17,7 +17,7 @@ import java.util.Objects;
 
 @RequiredArgsConstructor
 public class AuthHandlerMethodArgumentResolver implements HandlerMethodArgumentResolver {
-    private final JwtManager jwtManager;
+    private final JwtService jwtService;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -32,7 +32,7 @@ public class AuthHandlerMethodArgumentResolver implements HandlerMethodArgumentR
             WebDataBinderFactory binderFactory
     ) {
         var token = Objects.requireNonNull(webRequest.getHeader("Authorization"));
-        var authUser = jwtManager.getAuthUser(token.substring(7), TokenType.ACCESS_TOKEN);
+        var authUser = jwtService.getAuthUser(token.substring(7), TokenType.ACCESS_TOKEN);
 
         var available = Objects.requireNonNull(parameter.getMethod()).getAnnotation(Available.class);
         if (available != null) checkRole(authUser.role(), available.roles());

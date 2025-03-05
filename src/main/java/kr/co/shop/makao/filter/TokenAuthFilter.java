@@ -4,9 +4,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.co.shop.makao.component.JwtManager;
 import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.response.CommonExceptionImpl;
+import kr.co.shop.makao.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,7 +16,7 @@ import java.io.IOException;
 @Slf4j
 @RequiredArgsConstructor
 public class TokenAuthFilter extends AuthFilter {
-    private final JwtManager jwtManager;
+    private final JwtService jwtService;
 
     @Override
     protected void doFilterInternal(
@@ -36,7 +36,7 @@ public class TokenAuthFilter extends AuthFilter {
         }
 
         try {
-            jwtManager.getAuthUser(token.substring(7), TokenType.ACCESS_TOKEN);
+            jwtService.getAuthUser(token.substring(7), TokenType.ACCESS_TOKEN);
         } catch (CommonExceptionImpl e) {
             sendErrorResponse(response, HttpStatus.UNAUTHORIZED, e.getMessage());
         }

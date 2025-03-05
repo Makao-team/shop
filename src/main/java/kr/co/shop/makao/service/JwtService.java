@@ -1,4 +1,4 @@
-package kr.co.shop.makao.component;
+package kr.co.shop.makao.service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.TokenExpiredException;
@@ -7,13 +7,13 @@ import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.response.CommonException;
 import kr.co.shop.makao.vo.AuthUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
 @RequiredArgsConstructor
-@Component
-public class JwtManager {
+@Service
+public class JwtService {
     private final AuthProperties authProperties;
 
     public String create(AuthUser payload, TokenType tokenType) {

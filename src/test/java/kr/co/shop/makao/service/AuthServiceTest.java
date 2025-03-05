@@ -1,6 +1,5 @@
 package kr.co.shop.makao.service;
 
-import kr.co.shop.makao.component.JwtManager;
 import kr.co.shop.makao.dto.AuthDTO;
 import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.vo.AuthUser;
@@ -25,14 +24,14 @@ class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
     @Mock
-    private JwtManager jwtManager;
+    private JwtService jwtService;
 
     @Nested
     class issue {
         @Test
         void issue_성공() {
-            when(jwtManager.create(payload, TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
-            when(jwtManager.create(payload, TokenType.REFRESH_TOKEN)).thenReturn("refreshToken");
+            when(jwtService.create(payload, TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
+            when(jwtService.create(payload, TokenType.REFRESH_TOKEN)).thenReturn("refreshToken");
 
             var tokens = authService.issue(payload);
             assertThat(tokens.accessToken()).isEqualTo("accessToken");
@@ -49,8 +48,8 @@ class AuthServiceTest {
 
         @Test
         void reissue_성공() {
-            when(jwtManager.getAuthUser(dto.refreshToken(), TokenType.REFRESH_TOKEN)).thenReturn(payload);
-            when(jwtManager.create(payload, TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
+            when(jwtService.getAuthUser(dto.refreshToken(), TokenType.REFRESH_TOKEN)).thenReturn(payload);
+            when(jwtService.create(payload, TokenType.ACCESS_TOKEN)).thenReturn("accessToken");
 
             assertThat(authService.reissue(dto).accessToken()).isEqualTo("accessToken");
         }
