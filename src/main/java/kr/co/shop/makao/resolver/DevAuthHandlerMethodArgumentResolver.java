@@ -42,7 +42,8 @@ public class DevAuthHandlerMethodArgumentResolver implements HandlerMethodArgume
         if (available != null) checkRole(user.getRole().getValue(), available.roles());
 
         return AuthUser.builder()
-                .subject(user.getEmail())
+                .id(user.getId())
+                .email(user.getEmail())
                 .role(user.getRole().getValue())
                 .build();
     }

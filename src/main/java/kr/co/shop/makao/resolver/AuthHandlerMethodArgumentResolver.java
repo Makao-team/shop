@@ -1,6 +1,6 @@
 package kr.co.shop.makao.resolver;
 
-import kr.co.shop.makao.component.AuthTokenManager;
+import kr.co.shop.makao.component.JwtManager;
 import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.enums.UserRole;
 import kr.co.shop.makao.response.CommonException;
@@ -17,7 +17,7 @@ import java.util.Objects;
 
 @RequiredArgsConstructor
 public class AuthHandlerMethodArgumentResolver implements HandlerMethodArgumentResolver {
-    private final AuthTokenManager authTokenManager;
+    private final JwtManager jwtManager;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -32,14 +32,15 @@ public class AuthHandlerMethodArgumentResolver implements HandlerMethodArgumentR
             WebDataBinderFactory binderFactory
     ) {
         var token = Objects.requireNonNull(webRequest.getHeader("Authorization"));
-        var payload = authTokenManager.getPayload(token.substring(7), TokenType.ACCESS_TOKEN);
+        var authUser = jwtManager.getAuthUser(token.substring(7), TokenType.ACCESS_TOKEN);
 
         var available = Objects.requireNonNull(parameter.getMethod()).getAnnotation(Available.class);
-        if (available != null) checkRole(payload.role(), available.roles());
+        if (available != null) checkRole(authUser.role(), available.roles());
 
         return AuthUser.builder()
-                .subject(payload.subject())
-                .role(payload.role())
+                .email(authUser.email())
+                .id(authUser.id())
+                .role(authUser.role())
                 .build();
     }
 

@@ -4,7 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.co.shop.makao.component.AuthTokenManager;
+import kr.co.shop.makao.component.JwtManager;
 import kr.co.shop.makao.enums.TokenType;
 import kr.co.shop.makao.response.CommonExceptionImpl;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import java.io.IOException;
 @Slf4j
 @RequiredArgsConstructor
 public class TokenAuthFilter extends AuthFilter {
-    private final AuthTokenManager authTokenManager;
+    private final JwtManager jwtManager;
 
     @Override
     protected void doFilterInternal(
@@ -36,7 +36,7 @@ public class TokenAuthFilter extends AuthFilter {
         }
 
         try {
-            authTokenManager.getPayload(token.substring(7), TokenType.ACCESS_TOKEN);
+            jwtManager.getAuthUser(token.substring(7), TokenType.ACCESS_TOKEN);
         } catch (CommonExceptionImpl e) {
             sendErrorResponse(response, HttpStatus.UNAUTHORIZED, e.getMessage());
         }

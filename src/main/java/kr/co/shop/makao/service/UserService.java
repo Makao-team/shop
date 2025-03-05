@@ -24,7 +24,7 @@ public class UserService {
         if (exists.getPhoneNumberExists())
             throw CommonException.BAD_REQUEST.toException("PHONE_NUMBER_DUPLICATED");
 
-        User user = User.builder()
+        var user = User.builder()
                 .name(dto.name())
                 .email(dto.email())
                 .phoneNumber(dto.phoneNumber())
@@ -37,14 +37,15 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserDTO.SignInResponse signIn(UserDTO.SignInRequest dto) {
-        User user = userRepository.findByEmail(dto.email())
+        var user = userRepository.findByEmail(dto.email())
                 .orElseThrow(() -> CommonException.BAD_REQUEST.toException("USER_NOT_FOUND"));
 
         if (!StringEncoder.match(dto.password(), user.getPassword()))
             throw CommonException.BAD_REQUEST.toException("AUTHENTICATION_FAILED");
 
         var tokens = authService.issue(AuthUser.builder()
-                .subject(dto.email())
+                .email(dto.email())
+                .id(user.getId())
                 .role(user.getRole().getValue())
                 .build());
         return UserDTO.SignInResponse.builder()

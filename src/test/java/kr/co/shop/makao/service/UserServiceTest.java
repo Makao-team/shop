@@ -89,7 +89,7 @@ class UserServiceTest {
             try (var stringEncoderMockedStatic = mockStatic(StringEncoder.class)) {
                 stringEncoderMockedStatic.when(() -> StringEncoder.match(dto.password(), user.getPassword())).thenReturn(true);
 
-                AuthUser payload = AuthUser.builder().subject(dto.email()).role(user.getRole().getValue()).build();
+                AuthUser payload = AuthUser.builder().email(dto.email()).role(user.getRole().getValue()).build();
                 when(authService.issue(payload)).thenReturn(tokens);
 
                 assertThat(userService.signIn(dto).role()).isEqualTo(user.getRole());

@@ -13,20 +13,21 @@ import java.util.Date;
 
 @RequiredArgsConstructor
 @Component
-public class AuthTokenManager {
+public class JwtManager {
     private final AuthProperties authProperties;
 
     public String create(AuthUser payload, TokenType tokenType) {
         var algorithm = tokenType == TokenType.ACCESS_TOKEN ? authProperties.getAccessTokenAlgorithm() : authProperties.getRefreshTokenAlgorithm();
         var expiration = tokenType == TokenType.ACCESS_TOKEN ? authProperties.getAccessTokenExpiration() : authProperties.getRefreshTokenExpiration();
         return JWT.create()
-                .withSubject(payload.subject())
+                .withSubject(payload.email())
+                .withClaim("id", payload.id())
                 .withClaim("role", payload.role())
                 .withExpiresAt(new Date(System.currentTimeMillis() + expiration))
                 .sign(algorithm);
     }
 
-    public AuthUser getPayload(String token, TokenType tokenType) {
+    public AuthUser getAuthUser(String token, TokenType tokenType) {
         try {
             var algorithm = tokenType == TokenType.ACCESS_TOKEN ? authProperties.getAccessTokenAlgorithm() : authProperties.getRefreshTokenAlgorithm();
             var jwt = JWT.require(algorithm)
@@ -34,7 +35,8 @@ public class AuthTokenManager {
                     .verify(token);
 
             return AuthUser.builder()
-                    .subject(jwt.getSubject())
+                    .email(jwt.getSubject())
+                    .id(jwt.getClaim("id").asLong())
                     .role(jwt.getClaim("role").asString())
                     .build();
         } catch (TokenExpiredException cause) {
