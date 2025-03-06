@@ -1,12 +1,15 @@
 package kr.co.shop.makao.entity;
 
 import jakarta.persistence.*;
+import kr.co.shop.makao.dto.ProductDTO;
 import kr.co.shop.makao.entity.base.Auditable;
 import kr.co.shop.makao.entity.converter.ProductStatusConverter;
 import kr.co.shop.makao.enums.ProductStatus;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+@Getter
 @NoArgsConstructor
 @SuperBuilder
 @Entity(name = "product")
@@ -33,4 +36,13 @@ public class Product extends Auditable {
 
     @Column(nullable = false, name = "merchant_id")
     private long merchantId;
+
+    public void update(ProductDTO.UpdateRequest dto) {
+        dto.name().ifPresent((name) -> this.name = name);
+        dto.description().ifPresent((description) -> this.description = description);
+        dto.price().ifPresent((price) -> this.price = price);
+        dto.stock().ifPresent((stock) -> this.stock = stock);
+        dto.status().ifPresent((status) -> this.status = status);
+
+    }
 }

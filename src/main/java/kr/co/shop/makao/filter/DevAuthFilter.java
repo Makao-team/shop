@@ -15,7 +15,7 @@ public class DevAuthFilter extends AuthFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws IOException, ServletException {
         String email = request.getHeader("Authorization");
-        if (email.isBlank()) {
+        if (email == null || email.isBlank()) {
             sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "INVALID_TOKEN");
             return;
         }
