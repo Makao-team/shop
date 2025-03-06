@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @Configuration
 @EntityScan("kr.co.shop.makao.entity")
-@EnableJpaRepositories("kr.co.shop.makao.repository")
 @EnableJpaAuditing
-public @interface EnableCommonJpa {
+@EnableJpaRepositories("kr.co.shop.makao.repository")
+public class JpaConfig {
 }
