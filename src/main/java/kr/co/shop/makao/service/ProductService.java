@@ -38,6 +38,17 @@ public class ProductService {
         productRepository.save(product);
     }
 
+    @Transactional
+    public void update(Long id, ProductDTO.UpdateRequest dto, AuthUser authUser) {
+        var product = productRepository.findById(id)
+                .orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
+
+        if (isMerchant(authUser.role()) && product.getMerchantId() != authUser.id())
+            throw CommonException.FORBIDDEN.toException("FORBIDDEN");
+
+        product.update(dto);
+    }
+
     private boolean isMerchant(String role) {
         return role.equals(UserRole.MERCHANT.getValue());
     }

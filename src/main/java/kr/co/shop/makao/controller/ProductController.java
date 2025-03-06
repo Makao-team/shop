@@ -10,10 +10,7 @@ import kr.co.shop.makao.vo.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @Validated
@@ -29,6 +26,17 @@ public class ProductController {
             AuthUser authUser
     ) {
         productService.save(dto, authUser);
+        return CommonResponse.success(null);
+    }
+
+    @Available(roles = {UserRole.ADMIN, UserRole.MERCHANT})
+    @PatchMapping("/{id}")
+    ResponseEntity<CommonResponse<Void>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductDTO.UpdateRequest dto,
+            AuthUser authUser
+    ) {
+        productService.update(id, dto, authUser);
         return CommonResponse.success(null);
     }
 }
