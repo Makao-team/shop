@@ -3,6 +3,7 @@ package kr.co.shop.makao.service;
 import kr.co.shop.makao.dto.ProductDTO;
 import kr.co.shop.makao.entity.Product;
 import kr.co.shop.makao.entity.User;
+import kr.co.shop.makao.enums.ProductStatus;
 import kr.co.shop.makao.enums.UserRole;
 import kr.co.shop.makao.repository.ProductRepository;
 import kr.co.shop.makao.repository.UserRepository;
@@ -64,6 +65,41 @@ class ProductServiceTest {
             when(userRepository.findById(anyLong())).thenReturn(Optional.of(User.builder().id(1000L).build()));
 
             var exception = assertThrows(CommonExceptionImpl.class, () -> productService.save(dto, authUser));
+            assertThat(exception.getMessage()).isEqualTo("FORBIDDEN");
+        }
+    }
+
+    @Nested
+    class update {
+        ProductDTO.UpdateRequest dto = ProductDTO.UpdateRequest.builder()
+                .name(Optional.of("name"))
+                .description(Optional.of("description"))
+                .price(Optional.of(1000))
+                .stock(Optional.of(10))
+                .status(Optional.of(ProductStatus.PENDING))
+                .build();
+        AuthUser authUser = AuthUser.builder().id(1L).email("email").role(UserRole.MERCHANT.getValue()).build();
+
+        @Test
+        void update_성공() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.of(Product.builder().id(1L).merchantId(1L).build()));
+
+            productService.update(1L, dto, authUser);
+        }
+
+        @Test
+        void update_상품_없음_실패() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.update(1L, dto, authUser));
+            assertThat(exception.getMessage()).isEqualTo("PRODUCT_NOT_FOUND");
+        }
+
+        @Test
+        void update_권한_없음_실패() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.of(Product.builder().id(1L).merchantId(1000L).build()));
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.update(1L, dto, authUser));
             assertThat(exception.getMessage()).isEqualTo("FORBIDDEN");
         }
     }
