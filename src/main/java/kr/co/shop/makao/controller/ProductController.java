@@ -19,6 +19,13 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
     private final ProductService productService;
 
+    @GetMapping("/view")
+    ResponseEntity<CommonResponse<ProductDTO.FindAllViewResponse>> findAllView(
+            @Valid @ModelAttribute ProductDTO.FindAllViewRequest dto
+    ) {
+        return CommonResponse.success(productService.findAllView(dto));
+    }
+
     @Available(roles = {UserRole.ADMIN, UserRole.MERCHANT})
     @PostMapping
     ResponseEntity<CommonResponse<Void>> save(

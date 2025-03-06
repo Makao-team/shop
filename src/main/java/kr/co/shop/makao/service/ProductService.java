@@ -9,6 +9,7 @@ import kr.co.shop.makao.repository.UserRepository;
 import kr.co.shop.makao.response.CommonException;
 import kr.co.shop.makao.vo.AuthUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,20 @@ public class ProductService {
             throw CommonException.FORBIDDEN.toException("FORBIDDEN");
 
         product.update(dto);
+    }
+
+    @Transactional(readOnly = true)
+    public ProductDTO.FindAllViewResponse findAllView(ProductDTO.FindAllViewRequest dto) {
+        var slice = productRepository.findAllView(
+                dto.filter() == null ? null : dto.filter().name(),
+                dto.keyword(),
+                PageRequest.of(dto.page(), dto.size())
+        );
+
+        return ProductDTO.FindAllViewResponse.builder()
+                .contents(slice.getContent())
+                .last(slice.isLast())
+                .build();
     }
 
     private boolean isMerchant(String role) {

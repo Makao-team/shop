@@ -15,7 +15,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.SliceImpl;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -101,6 +104,45 @@ class ProductServiceTest {
 
             var exception = assertThrows(CommonExceptionImpl.class, () -> productService.update(1L, dto, authUser));
             assertThat(exception.getMessage()).isEqualTo("FORBIDDEN");
+        }
+    }
+
+    @Nested
+    class findAllView {
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        @Test
+        void findAllView_filter_null_성공() {
+            var dto = ProductDTO.FindAllViewRequest.builder()
+                    .filter(null)
+                    .keyword("")
+                    .page(0)
+                    .size(10)
+                    .build();
+            var sliceImpl = new SliceImpl<Product.View>(List.of(), pageRequest, false);
+
+            when(productRepository.findAllView(null, "", pageRequest)).thenReturn(sliceImpl);
+
+            var response = productService.findAllView(dto);
+
+            assertThat(response.contents()).isEqualTo(List.of());
+        }
+
+        @Test
+        void findAllView_성공() {
+            var dto = ProductDTO.FindAllViewRequest.builder()
+                    .filter(ProductDTO.FindAllViewRequest.Filter.name)
+                    .keyword("keyword")
+                    .page(0)
+                    .size(10)
+                    .build();
+            var sliceImpl = new SliceImpl<Product.View>(List.of(), pageRequest, false);
+
+            when(productRepository.findAllView("name", "keyword", pageRequest)).thenReturn(sliceImpl);
+
+            var response = productService.findAllView(dto);
+
+            assertThat(response.contents()).isEqualTo(List.of());
         }
     }
 }

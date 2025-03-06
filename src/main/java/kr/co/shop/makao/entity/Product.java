@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
+
 @Getter
 @NoArgsConstructor
 @SuperBuilder
@@ -43,6 +45,21 @@ public class Product extends Auditable {
         dto.price().ifPresent((price) -> this.price = price);
         dto.stock().ifPresent((stock) -> this.stock = stock);
         dto.status().ifPresent((status) -> this.status = status);
+    }
 
+    public interface View {
+        Long getId();
+
+        String getName();
+
+        String getDescription();
+
+        Integer getPrice();
+
+        Integer getStock();
+
+        String getMerchantName();
+
+        LocalDateTime getCreatedAt();
     }
 }

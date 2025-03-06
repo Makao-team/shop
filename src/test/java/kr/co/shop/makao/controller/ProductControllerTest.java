@@ -236,7 +236,7 @@ class ProductControllerTest extends BaseIntegrationTest {
             given().contentType(ContentType.JSON)
                     .header("Authorization", "Bearer " + accessToken)
                     .when()
-                    .get("/products")
+                    .get("/products/view")
                     .then()
                     .statusCode(200)
                     .body("message", equalTo("OK"))
@@ -252,7 +252,7 @@ class ProductControllerTest extends BaseIntegrationTest {
 
             given().contentType(ContentType.JSON)
                     .when()
-                    .get("/products")
+                    .get("/products/view")
                     .then()
                     .statusCode(200)
                     .body("message", equalTo("OK"))
@@ -268,7 +268,7 @@ class ProductControllerTest extends BaseIntegrationTest {
 
             given().contentType(ContentType.JSON)
                     .when()
-                    .get("/products?filter=name&keyword=상품")
+                    .get("/products/view?filter=name&keyword=상품")
                     .then()
                     .statusCode(200)
                     .body("message", equalTo("OK"))
