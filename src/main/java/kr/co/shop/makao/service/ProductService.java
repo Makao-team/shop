@@ -105,6 +105,17 @@ public class ProductService {
                 .build();
     }
 
+    @Transactional
+    public void archive(Long id, AuthUser authUser) {
+        var product = productRepository.findById(id)
+                .orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
+
+        if (isMerchant(authUser.role()) && product.getMerchantId() != authUser.id())
+            throw CommonException.FORBIDDEN.toException("FORBIDDEN");
+
+        product.archive();
+    }
+
     private boolean isMerchant(String role) {
         return role.equals(UserRole.MERCHANT.getValue());
     }

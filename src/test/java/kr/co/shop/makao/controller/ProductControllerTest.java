@@ -411,4 +411,57 @@ class ProductControllerTest extends BaseIntegrationTest {
                     .body("message", equalTo("PRODUCT_NOT_FOUND"));
         }
     }
+
+    @Nested
+    class archive {
+        @Test
+        void archive_성공() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long merchantId = findUserByEmail(email).getId();
+            Product product = insertProduct("상품", merchantId);
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, email, merchantId))
+                    .when()
+                    .post("/products/archive/" + product.getId())
+                    .then()
+                    .statusCode(200)
+                    .body("message", equalTo("OK"));
+        }
+
+        @Test
+        void archive_제품_없음_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long wrongProductId = new Random().nextInt(10000000);
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, email, new Random().nextLong()))
+                    .when()
+                    .post("/products/archive/" + wrongProductId)
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("PRODUCT_NOT_FOUND"));
+        }
+
+        @Test
+        void archive_다른_merchant_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long merchantId = findUserByEmail(email).getId();
+            Product product = insertProduct("상품", merchantId);
+            String anotherEmail = createRandomEmail();
+            insertUser("user", anotherEmail, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long anotherMerchantId = findUserByEmail(anotherEmail).getId();
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, anotherEmail, anotherMerchantId))
+                    .when()
+                    .post("/products/archive/" + product.getId())
+                    .then()
+                    .statusCode(403)
+                    .body("message", equalTo("FORBIDDEN"));
+        }
+    }
 }

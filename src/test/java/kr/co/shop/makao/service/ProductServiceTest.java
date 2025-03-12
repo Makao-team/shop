@@ -241,4 +241,32 @@ class ProductServiceTest {
             assertThat(exception.getMessage()).isEqualTo("PRODUCT_NOT_FOUND");
         }
     }
+
+    @Nested
+    class archive {
+        AuthUser authUser = AuthUser.builder().id(1L).email("email").role(UserRole.MERCHANT.getValue()).build();
+
+        @Test
+        void archive_성공() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.of(Product.builder().id(1L).merchantId(1L).build()));
+
+            productService.archive(1L, authUser);
+        }
+
+        @Test
+        void archive_상품_없음_실패() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.archive(1L, authUser));
+            assertThat(exception.getMessage()).isEqualTo("PRODUCT_NOT_FOUND");
+        }
+
+        @Test
+        void archive_권한_없음_실패() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.of(Product.builder().id(1L).merchantId(1000L).build()));
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.archive(1L, authUser));
+            assertThat(exception.getMessage()).isEqualTo("FORBIDDEN");
+        }
+    }
 }

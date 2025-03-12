@@ -71,4 +71,14 @@ public class ProductController {
         productService.update(id, dto, authUser);
         return CommonResponse.success(null);
     }
+
+    @Available(roles = {UserRole.ADMIN, UserRole.MERCHANT})
+    @PostMapping("/archive/{id}")
+    ResponseEntity<CommonResponse<Void>> archive(
+            @PathVariable Long id,
+            AuthUser authUser
+    ) {
+        productService.archive(id, authUser);
+        return CommonResponse.success(null);
+    }
 }
