@@ -69,6 +69,19 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public ProductDTO.FindOneDetailResponse findOneDetail(ProductDTO.FindOneRequest dto, AuthUser authUser) {
+        var product = productRepository.findById(dto.id())
+                .orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
+
+        if (isMerchant(authUser.role()) && product.getMerchantId() != authUser.id())
+            throw CommonException.FORBIDDEN.toException("FORBIDDEN");
+
+        return ProductDTO.FindOneDetailResponse.builder()
+                .content(product)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
     public ProductDTO.FindAllViewResponse findAllView(ProductDTO.FindAllViewRequest dto) {
         var slice = productRepository.findAllView(
                 dto.filter() == null ? null : dto.filter().name(),
@@ -83,7 +96,7 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public ProductDTO.FindOneViewResponse findOneView(ProductDTO.FindOneViewRequest dto) {
+    public ProductDTO.FindOneViewResponse findOneView(ProductDTO.FindOneRequest dto) {
         var view = productRepository.findOneView(dto.id())
                 .orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
 
@@ -95,5 +108,4 @@ public class ProductService {
     private boolean isMerchant(String role) {
         return role.equals(UserRole.MERCHANT.getValue());
     }
-
 }

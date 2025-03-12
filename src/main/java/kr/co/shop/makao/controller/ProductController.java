@@ -28,6 +28,14 @@ public class ProductController {
         return CommonResponse.success(productService.findAllDetail(dto, authUser));
     }
 
+    @Available(roles = {UserRole.ADMIN, UserRole.MERCHANT})
+    @GetMapping("/{id}")
+    ResponseEntity<CommonResponse<ProductDTO.FindOneDetailResponse>> findOne(
+            @Valid @ModelAttribute ProductDTO.FindOneRequest dto,
+            AuthUser authUser
+    ) {
+        return CommonResponse.success(productService.findOneDetail(dto, authUser));
+    }
 
     @GetMapping("/view")
     ResponseEntity<CommonResponse<ProductDTO.FindAllViewResponse>> findAllView(
@@ -38,7 +46,7 @@ public class ProductController {
 
     @GetMapping("/view/{id}")
     ResponseEntity<CommonResponse<ProductDTO.FindOneViewResponse>> findOneView(
-            @Valid @ModelAttribute ProductDTO.FindOneViewRequest dto
+            @Valid @ModelAttribute ProductDTO.FindOneRequest dto
     ) {
         return CommonResponse.success(productService.findOneView(dto));
     }

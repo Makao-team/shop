@@ -151,6 +151,37 @@ class ProductServiceTest {
     }
 
     @Nested
+    class findOneDetail {
+        ProductDTO.FindOneRequest dto = ProductDTO.FindOneRequest.builder().id(1L).build();
+        AuthUser authUser = AuthUser.builder().id(1L).email("email").role(UserRole.MERCHANT.getValue()).build();
+
+        @Test
+        void findOneDetail_성공() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.of(Product.builder().id(1L).merchantId(1L).build()));
+
+            var response = productService.findOneDetail(dto, authUser);
+
+            assertThat(response.content()).isNotNull();
+        }
+
+        @Test
+        void findOneDetail_상품_없음_실패() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.findOneDetail(dto, authUser));
+            assertThat(exception.getMessage()).isEqualTo("PRODUCT_NOT_FOUND");
+        }
+
+        @Test
+        void findOneDetail_권한_없음_실패() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.of(Product.builder().id(1L).merchantId(1000L).build()));
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.findOneDetail(dto, authUser));
+            assertThat(exception.getMessage()).isEqualTo("FORBIDDEN");
+        }
+    }
+
+    @Nested
     class findAllView {
         PageRequest pageRequest = PageRequest.of(0, 10);
 
@@ -191,7 +222,7 @@ class ProductServiceTest {
 
     @Nested
     class findOneView {
-        ProductDTO.FindOneViewRequest dto = ProductDTO.FindOneViewRequest.builder().id(1L).build();
+        ProductDTO.FindOneRequest dto = ProductDTO.FindOneRequest.builder().id(1L).build();
 
         @Test
         void findOneView_성공() {

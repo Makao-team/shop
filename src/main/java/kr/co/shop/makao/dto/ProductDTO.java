@@ -57,8 +57,14 @@ public record ProductDTO() {
     }
 
     @Builder
-    public record FindOneViewRequest(
-            @Min(value = 0, message = "INVALID_ID") long id
+    public record FindOneRequest(
+            @NotNull(message = "INVALID_ID") long id
+    ) {
+    }
+
+    @Builder
+    public record FindOneDetailResponse(
+            Product content
     ) {
     }
 

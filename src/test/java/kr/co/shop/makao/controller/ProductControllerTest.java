@@ -278,6 +278,56 @@ class ProductControllerTest extends BaseIntegrationTest {
     }
 
     @Nested
+    class findOneDetail {
+        @Test
+        void findOneDetail_성공() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long merchantId = findUserByEmail(email).getId();
+            Product product = insertProduct("상품", merchantId);
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, email, merchantId))
+                    .when()
+                    .get("/products/" + product.getId())
+                    .then()
+                    .statusCode(200)
+                    .body("message", equalTo("OK"));
+        }
+
+        @Test
+        void findOneDetail_제품_없음_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long wrongProductId = new Random().nextInt(10000000);
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, email, new Random().nextLong()))
+                    .when()
+                    .get("/products/" + wrongProductId)
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("PRODUCT_NOT_FOUND"));
+        }
+
+        @Test
+        void findOneDetail_customer_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.CUSTOMER);
+            long customerId = findUserByEmail(email).getId();
+            Product product = insertProduct("상품", customerId);
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.CUSTOMER, email, customerId))
+                    .when()
+                    .get("/products/" + product.getId())
+                    .then()
+                    .statusCode(403)
+                    .body("message", equalTo("FORBIDDEN"));
+        }
+    }
+
+    @Nested
     class findAllView {
         @Test
         void findAllView_회원_성공() {
