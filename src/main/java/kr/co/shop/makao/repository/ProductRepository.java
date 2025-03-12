@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("""
@@ -26,4 +28,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             """)
     Slice<Product.View> findAllView(@Param("filter") String filter, @Param("keyword") String keyword, Pageable pageable);
 
+    @Query("""
+            SELECT p.id as id, p.name as name, p.description as description, p.price as price, p.stock as stock, p.createdAt as createdAt, 
+                   (SELECT name FROM user WHERE id = p.merchantId) as merchantName 
+            FROM product p
+            WHERE p.id = :id
+            """)
+    Optional<Product.View> findOneView(Long id);
 }

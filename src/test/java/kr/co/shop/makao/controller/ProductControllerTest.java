@@ -275,4 +275,36 @@ class ProductControllerTest extends BaseIntegrationTest {
                     .body("data.contents.size()", greaterThan(0));
         }
     }
+
+    @Nested
+    class findOneView {
+        @Test
+        void findOneView_성공() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long merchantId = findUserByEmail(email).getId();
+            Product product = insertProduct("상품", merchantId);
+
+            given().contentType(ContentType.JSON)
+                    .when()
+                    .get("/products/view/" + product.getId())
+                    .then()
+                    .statusCode(200)
+                    .body("message", equalTo("OK"));
+        }
+
+        @Test
+        void findOneView_제품_없음_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long wrongProductId = new Random().nextInt(10000000);
+
+            given().contentType(ContentType.JSON)
+                    .when()
+                    .get("/products/view/" + wrongProductId)
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("PRODUCT_NOT_FOUND"));
+        }
+    }
 }

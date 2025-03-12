@@ -55,4 +55,16 @@ public record ProductDTO() {
             boolean last
     ) {
     }
+
+    @Builder
+    public record FindOneViewRequest(
+            @Min(value = 0, message = "INVALID_ID") long id
+    ) {
+    }
+
+    @Builder
+    public record FindOneViewResponse(
+            Product.View content
+    ) {
+    }
 }

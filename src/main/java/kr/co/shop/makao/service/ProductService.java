@@ -64,6 +64,16 @@ public class ProductService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public ProductDTO.FindOneViewResponse findOneView(ProductDTO.FindOneViewRequest dto) {
+        var view = productRepository.findOneView(dto.id())
+                .orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
+
+        return ProductDTO.FindOneViewResponse.builder()
+                .content(view)
+                .build();
+    }
+
     private boolean isMerchant(String role) {
         return role.equals(UserRole.MERCHANT.getValue());
     }

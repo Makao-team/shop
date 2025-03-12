@@ -25,6 +25,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -143,6 +144,28 @@ class ProductServiceTest {
             var response = productService.findAllView(dto);
 
             assertThat(response.contents()).isEqualTo(List.of());
+        }
+    }
+
+    @Nested
+    class findOneView {
+        ProductDTO.FindOneViewRequest dto = ProductDTO.FindOneViewRequest.builder().id(1L).build();
+
+        @Test
+        void findOneView_성공() {
+            when(productRepository.findOneView(anyLong())).thenReturn(Optional.of(mock(Product.View.class)));
+
+            var response = productService.findOneView(dto);
+
+            assertThat(response.content()).isNotNull();
+        }
+
+        @Test
+        void findOneView_상품_없음_실패() {
+            when(productRepository.findOneView(anyLong())).thenReturn(Optional.empty());
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.findOneView(dto));
+            assertThat(exception.getMessage()).isEqualTo("PRODUCT_NOT_FOUND");
         }
     }
 }

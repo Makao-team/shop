@@ -26,6 +26,13 @@ public class ProductController {
         return CommonResponse.success(productService.findAllView(dto));
     }
 
+    @GetMapping("/view/{id}")
+    ResponseEntity<CommonResponse<ProductDTO.FindOneViewResponse>> findOneView(
+            @Valid @ModelAttribute ProductDTO.FindOneViewRequest dto
+    ) {
+        return CommonResponse.success(productService.findOneView(dto));
+    }
+
     @Available(roles = {UserRole.ADMIN, UserRole.MERCHANT})
     @PostMapping
     ResponseEntity<CommonResponse<Void>> save(
