@@ -67,4 +67,30 @@ public record ProductDTO() {
             Product.View content
     ) {
     }
+
+    @Builder
+    public record FindAllDetailRequest(
+            @NotNull(message = "BLANK_MERCHANT_ID") long merchantId,
+            @Min(value = 0, message = "INVALID_PAGE") Integer page,
+            @Min(value = 10, message = "INVALID_SIZE") Integer size,
+            FindAllDetailRequest.Filter filter, // [Error] 메시지 관리가 안됨
+            String keyword
+    ) {
+        public FindAllDetailRequest {
+            if (page == null) page = 0;
+            if (size == null) size = 10;
+        }
+
+        @Getter
+        public enum Filter {
+            name, description
+        }
+    }
+
+    @Builder
+    public record FindAllDetailResponse(
+            List<Product> contents,
+            boolean last
+    ) {
+    }
 }

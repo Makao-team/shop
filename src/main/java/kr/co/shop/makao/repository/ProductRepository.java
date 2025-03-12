@@ -13,6 +13,19 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("""
+            SELECT p
+            FROM product p
+            WHERE :merchantId = p.merchantId AND
+                  p.isArchived = false AND
+                    (COALESCE(:filter, '') = '' OR
+                    (:filter IN ('name', 'description')) AND (
+                        (:filter = 'name' AND p.name LIKE CONCAT('%', COALESCE(:keyword, ''), '%')) OR
+                        (:filter = 'description' AND p.description LIKE CONCAT('%', COALESCE(:keyword, ''), '%'))
+                    ))
+            """)
+    Slice<Product> findAll(@Param("merchantId") long merchantId, @Param("filter") String filter, @Param("keyword") String keyword, Pageable pageable);
+
+    @Query("""
             SELECT p.id as id, p.name as name, p.description as description, p.price as price, p.stock as stock, p.createdAt as createdAt, 
                    (SELECT name FROM user WHERE id = p.merchantId) as merchantName 
             FROM product p

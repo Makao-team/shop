@@ -109,6 +109,48 @@ class ProductServiceTest {
     }
 
     @Nested
+    class findAllDetail {
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        AuthUser authUser = AuthUser.builder().id(1L).email("email").role(UserRole.MERCHANT.getValue()).build();
+
+        @Test
+        void findAllDetail_filter_null_성공() {
+            var dto = ProductDTO.FindAllDetailRequest.builder()
+                    .merchantId(1L)
+                    .filter(null)
+                    .keyword("")
+                    .page(0)
+                    .size(10)
+                    .build();
+            var sliceImpl = new SliceImpl<Product>(List.of(), pageRequest, false);
+
+            when(productRepository.findAll(1L, null, "", pageRequest)).thenReturn(sliceImpl);
+
+            var response = productService.findAllDetail(dto, authUser);
+
+            assertThat(response.contents()).isEqualTo(List.of());
+        }
+
+        @Test
+        void findAllDetail_성공() {
+            var dto = ProductDTO.FindAllDetailRequest.builder()
+                    .merchantId(1L)
+                    .filter(ProductDTO.FindAllDetailRequest.Filter.name)
+                    .keyword("keyword")
+                    .page(0)
+                    .size(10)
+                    .build();
+            var sliceImpl = new SliceImpl<Product>(List.of(), pageRequest, false);
+
+            when(productRepository.findAll(1L, "name", "keyword", pageRequest)).thenReturn(sliceImpl);
+
+            var response = productService.findAllDetail(dto, authUser);
+
+            assertThat(response.contents()).isEqualTo(List.of());
+        }
+    }
+
+    @Nested
     class findAllView {
         PageRequest pageRequest = PageRequest.of(0, 10);
 

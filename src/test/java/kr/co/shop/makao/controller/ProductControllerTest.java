@@ -224,6 +224,60 @@ class ProductControllerTest extends BaseIntegrationTest {
     }
 
     @Nested
+    class findAllDetail {
+        @Test
+        void findAllDetail_성공() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long merchantId = findUserByEmail(email).getId();
+            String accessToken = createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, email, merchantId);
+            insertProduct("상품", merchantId);
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + accessToken)
+                    .when()
+                    .get("/products?merchantId=" + merchantId)
+                    .then()
+                    .statusCode(200)
+                    .body("message", equalTo("OK"))
+                    .body("data.contents.size()", greaterThan(0));
+        }
+
+        @Test
+        void findAllDetail_customer_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.CUSTOMER);
+            long customerId = findUserByEmail(email).getId();
+            String accessToken = createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.CUSTOMER, email, customerId);
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + accessToken)
+                    .when()
+                    .get("/products?merchantId=" + customerId)
+                    .then()
+                    .statusCode(403)
+                    .body("message", equalTo("FORBIDDEN"));
+        }
+
+        @Test
+        void findAllDetail_name_조회_성공() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long merchantId = findUserByEmail(email).getId();
+            insertProduct("상품", merchantId);
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, email, merchantId))
+                    .when()
+                    .get("/products?filter=name&keyword=상품&merchantId=" + merchantId)
+                    .then()
+                    .statusCode(200)
+                    .body("message", equalTo("OK"))
+                    .body("data.contents.size()", greaterThan(0));
+        }
+    }
+
+    @Nested
     class findAllView {
         @Test
         void findAllView_회원_성공() {

@@ -51,6 +51,24 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public ProductDTO.FindAllDetailResponse findAllDetail(ProductDTO.FindAllDetailRequest dto, AuthUser authUser) {
+        if (isMerchant(authUser.role()) && dto.merchantId() != authUser.id())
+            throw CommonException.FORBIDDEN.toException("FORBIDDEN");
+
+        var slice = productRepository.findAll(
+                dto.merchantId(),
+                dto.filter() == null ? null : dto.filter().name(),
+                dto.keyword(),
+                PageRequest.of(dto.page(), dto.size())
+        );
+
+        return ProductDTO.FindAllDetailResponse.builder()
+                .contents(slice.getContent())
+                .last(slice.isLast())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
     public ProductDTO.FindAllViewResponse findAllView(ProductDTO.FindAllViewRequest dto) {
         var slice = productRepository.findAllView(
                 dto.filter() == null ? null : dto.filter().name(),
@@ -77,4 +95,5 @@ public class ProductService {
     private boolean isMerchant(String role) {
         return role.equals(UserRole.MERCHANT.getValue());
     }
+
 }
