@@ -28,4 +28,8 @@ public abstract class Auditable {
 
     @Builder.Default
     private boolean isArchived = false;
+
+    public void archive() {
+        isArchived = true;
+    }
 }
