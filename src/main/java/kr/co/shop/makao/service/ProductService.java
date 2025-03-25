@@ -44,6 +44,9 @@ public class ProductService {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
 
+        if (product.isActive())
+            throw CommonException.BAD_REQUEST.toException("PRODUCT_MUST_BE_PENDING");
+
         if (isMerchant(authUser.role()) && product.getMerchantId() != authUser.id())
             throw CommonException.FORBIDDEN.toException("FORBIDDEN");
 
@@ -109,6 +112,9 @@ public class ProductService {
     public void archive(Long id, AuthUser authUser) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
+
+        if (product.isActive())
+            throw CommonException.BAD_REQUEST.toException("PRODUCT_MUST_BE_PENDING");
 
         if (isMerchant(authUser.role()) && product.getMerchantId() != authUser.id())
             throw CommonException.FORBIDDEN.toException("FORBIDDEN");

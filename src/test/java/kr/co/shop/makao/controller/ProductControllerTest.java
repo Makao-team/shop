@@ -39,6 +39,19 @@ class ProductControllerTest extends BaseIntegrationTest {
         });
     }
 
+    private Product insertProduct(String name, long merchantId, ProductStatus productStatus) {
+        return transactionTemplate.execute(transactionStatus -> {
+            em.createQuery("INSERT INTO product (name, description, price, stock, status, merchantId) VALUES (:name, \"상품 설명\", 1000, 10, :status, :merchantId)")
+                    .setParameter("name", name)
+                    .setParameter("status", productStatus.getValue())
+                    .setParameter("merchantId", merchantId)
+                    .executeUpdate();
+            return em.createQuery("SELECT p FROM product p WHERE p.merchantId = :merchantId", Product.class)
+                    .setParameter("merchantId", merchantId)
+                    .getSingleResult();
+        });
+    }
+
     @Nested
     class save {
         private ProductDTO.SaveRequest createRequest(long merchantId) {
@@ -154,7 +167,6 @@ class ProductControllerTest extends BaseIntegrationTest {
                     .description(Optional.of("상품 설명 수정"))
                     .price(Optional.of(2000))
                     .stock(Optional.of(20))
-                    .status(Optional.of(ProductStatus.PENDING))
                     .build();
 
             given().contentType(ContentType.JSON)
@@ -180,7 +192,6 @@ class ProductControllerTest extends BaseIntegrationTest {
                     .description(Optional.of("상품 설명 수정"))
                     .price(Optional.of(2000))
                     .stock(Optional.of(20))
-                    .status(Optional.of(ProductStatus.PENDING))
                     .build();
 
             given().contentType(ContentType.JSON)
@@ -191,6 +202,31 @@ class ProductControllerTest extends BaseIntegrationTest {
                     .then()
                     .statusCode(400)
                     .body("message", equalTo("PRODUCT_NOT_FOUND"));
+        }
+
+        @Test
+        void update_제품_활성화_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            User merchant = findUserByEmail(email);
+            String accessToken = createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, email, merchant.getId());
+            Product product = insertProduct("상품", merchant.getId(), ProductStatus.ACTIVE);
+
+            ProductDTO.UpdateRequest updateRequest = ProductDTO.UpdateRequest.builder()
+                    .name(Optional.of("상품 수정"))
+                    .description(Optional.of("상품 설명 수정"))
+                    .price(Optional.of(2000))
+                    .stock(Optional.of(20))
+                    .build();
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + accessToken)
+                    .body(updateRequest)
+                    .when()
+                    .patch("/products/" + product.getId())
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("PRODUCT_MUST_BE_PENDING"));
         }
 
         @Test
@@ -209,7 +245,6 @@ class ProductControllerTest extends BaseIntegrationTest {
                     .description(Optional.of("상품 설명 수정"))
                     .price(Optional.of(2000))
                     .stock(Optional.of(20))
-                    .status(Optional.of(ProductStatus.PENDING))
                     .build();
 
             given().contentType(ContentType.JSON)
@@ -443,6 +478,22 @@ class ProductControllerTest extends BaseIntegrationTest {
                     .then()
                     .statusCode(400)
                     .body("message", equalTo("PRODUCT_NOT_FOUND"));
+        }
+
+        @Test
+        void archive_제품_활성화_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            long merchantId = findUserByEmail(email).getId();
+            Product product = insertProduct("상품", merchantId, ProductStatus.ACTIVE);
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, email, merchantId))
+                    .when()
+                    .post("/products/archive/" + product.getId())
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("PRODUCT_MUST_BE_PENDING"));
         }
 
         @Test

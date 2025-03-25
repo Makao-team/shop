@@ -80,7 +80,6 @@ class ProductServiceTest {
                 .description(Optional.of("description"))
                 .price(Optional.of(1000))
                 .stock(Optional.of(10))
-                .status(Optional.of(ProductStatus.PENDING))
                 .build();
         AuthUser authUser = AuthUser.builder().id(1L).email("email").role(UserRole.MERCHANT.getValue()).build();
 
@@ -97,6 +96,14 @@ class ProductServiceTest {
 
             var exception = assertThrows(CommonExceptionImpl.class, () -> productService.update(1L, dto, authUser));
             assertThat(exception.getMessage()).isEqualTo("PRODUCT_NOT_FOUND");
+        }
+
+        @Test
+        void update_상품_활성화_실패() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.of(Product.builder().id(1L).merchantId(1L).status(ProductStatus.ACTIVE).build()));
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.update(1L, dto, authUser));
+            assertThat(exception.getMessage()).isEqualTo("PRODUCT_MUST_BE_PENDING");
         }
 
         @Test
@@ -259,6 +266,14 @@ class ProductServiceTest {
 
             var exception = assertThrows(CommonExceptionImpl.class, () -> productService.archive(1L, authUser));
             assertThat(exception.getMessage()).isEqualTo("PRODUCT_NOT_FOUND");
+        }
+
+        @Test
+        void archive_상품_활성화_실패() {
+            when(productRepository.findById(anyLong())).thenReturn(Optional.of(Product.builder().id(1L).merchantId(1L).status(ProductStatus.ACTIVE).build()));
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.archive(1L, authUser));
+            assertThat(exception.getMessage()).isEqualTo("PRODUCT_MUST_BE_PENDING");
         }
 
         @Test

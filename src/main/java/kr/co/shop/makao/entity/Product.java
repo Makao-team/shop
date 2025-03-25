@@ -44,7 +44,10 @@ public class Product extends Auditable {
         dto.description().ifPresent((description) -> this.description = description);
         dto.price().ifPresent((price) -> this.price = price);
         dto.stock().ifPresent((stock) -> this.stock = stock);
-        dto.status().ifPresent((status) -> this.status = status);
+    }
+
+    public boolean isActive() {
+        return this.status == ProductStatus.ACTIVE;
     }
 
     public interface View {
