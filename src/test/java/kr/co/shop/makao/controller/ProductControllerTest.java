@@ -153,6 +153,78 @@ class ProductControllerTest extends BaseIntegrationTest {
     }
 
     @Nested
+    class updateStatus {
+        @Test
+        void updateStatus_성공() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            User merchant = findUserByEmail(email);
+            String accessToken = createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, email, merchant.getId());
+            Product product = insertProduct("상품", merchant.getId());
+
+            ProductDTO.UpdateStatusRequest updateStatusRequest = ProductDTO.UpdateStatusRequest.builder()
+                    .status(ProductStatus.ACTIVE)
+                    .build();
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + accessToken)
+                    .body(updateStatusRequest)
+                    .when()
+                    .post("/products/" + product.getId() + "/status")
+                    .then()
+                    .statusCode(200)
+                    .body("message", equalTo("OK"));
+        }
+
+        @Test
+        void updateStatus_제품_없음_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            User merchant = findUserByEmail(email);
+            String accessToken = createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, email, merchant.getId());
+            long wrongProductId = new Random().nextLong();
+
+            ProductDTO.UpdateStatusRequest updateStatusRequest = ProductDTO.UpdateStatusRequest.builder()
+                    .status(ProductStatus.ACTIVE)
+                    .build();
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + accessToken)
+                    .body(updateStatusRequest)
+                    .when()
+                    .post("/products/" + wrongProductId + "/status")
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("PRODUCT_NOT_FOUND"));
+        }
+
+        @Test
+        void updateStatus_다른_merchant_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            User merchant = findUserByEmail(email);
+            String anotherEmail = createRandomEmail();
+            insertUser("user", anotherEmail, createRandomPhoneNumber(), "password", UserRole.MERCHANT);
+            User anotherMerchant = findUserByEmail(anotherEmail);
+            String accessToken = createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.MERCHANT, anotherEmail, anotherMerchant.getId());
+            Product product = insertProduct("상품", merchant.getId());
+
+            ProductDTO.UpdateStatusRequest updateStatusRequest = ProductDTO.UpdateStatusRequest.builder()
+                    .status(ProductStatus.ACTIVE)
+                    .build();
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + accessToken)
+                    .body(updateStatusRequest)
+                    .when()
+                    .post("/products/" + product.getId() + "/status")
+                    .then()
+                    .statusCode(403)
+                    .body("message", equalTo("FORBIDDEN"));
+        }
+    }
+
+    @Nested
     class update {
         @Test
         void update_성공() {

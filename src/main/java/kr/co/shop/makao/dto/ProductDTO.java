@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import kr.co.shop.makao.entity.Product;
+import kr.co.shop.makao.enums.ProductStatus;
 import kr.co.shop.makao.validation.NotBlankNullable;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +20,12 @@ public record ProductDTO() {
             @NotNull(message = "INVALID_PRICE") @Min(value = 0, message = "INVALID_PRICE") int price,
             @NotNull(message = "INVALID_STOCK") @Min(value = 0, message = "INVALID_STOCK") int stock,
             @NotNull(message = "BLANK_MERCHANT_ID") long merchantId) {
+    }
+
+    @Builder
+    public record UpdateStatusRequest(
+            @NotNull(message = "INVALID_STATUS") ProductStatus status
+    ) {
     }
 
     @Builder
