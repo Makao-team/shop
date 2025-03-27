@@ -62,6 +62,17 @@ public class ProductController {
     }
 
     @Available(roles = {UserRole.ADMIN, UserRole.MERCHANT})
+    @PostMapping("/{id}/status")
+    ResponseEntity<CommonResponse<Void>> updateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductDTO.UpdateStatusRequest dto,
+            AuthUser authUser
+    ) {
+        productService.updateStatus(id, dto, authUser);
+        return CommonResponse.success(null);
+    }
+
+    @Available(roles = {UserRole.ADMIN, UserRole.MERCHANT})
     @PatchMapping("/{id}")
     ResponseEntity<CommonResponse<Void>> update(
             @PathVariable Long id,
@@ -79,6 +90,16 @@ public class ProductController {
             AuthUser authUser
     ) {
         productService.archive(id, authUser);
+        return CommonResponse.success(null);
+    }
+
+    @Available(roles = {UserRole.CUSTOMER})
+    @PostMapping("/deduction/{id}")
+    ResponseEntity<CommonResponse<Void>> deduct(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductDTO.DeductRequest dto
+    ) {
+        productService.deduct(id, dto);
         return CommonResponse.success(null);
     }
 }

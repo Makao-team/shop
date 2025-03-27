@@ -1,9 +1,11 @@
 package kr.co.shop.makao.repository;
 
+import jakarta.persistence.LockModeType;
 import kr.co.shop.makao.entity.Product;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -48,4 +50,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             WHERE p.id = :id
             """)
     Optional<Product.View> findOneView(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT p
+            FROM product p
+            WHERE p.id = :id AND
+                  p.isArchived = false
+            """)
+    Optional<Product> findByIdWithLock(Long id);
 }

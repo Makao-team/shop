@@ -40,9 +40,23 @@ public class ProductService {
     }
 
     @Transactional
+    public void updateStatus(Long id, ProductDTO.UpdateStatusRequest dto, AuthUser authUser) {
+        var product = productRepository.findById(id)
+                .orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
+
+        if (isMerchant(authUser.role()) && product.getMerchantId() != authUser.id())
+            throw CommonException.FORBIDDEN.toException("FORBIDDEN");
+
+        product.update(dto.status());
+    }
+
+    @Transactional
     public void update(Long id, ProductDTO.UpdateRequest dto, AuthUser authUser) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
+
+        if (product.isActive())
+            throw CommonException.BAD_REQUEST.toException("PRODUCT_MUST_BE_PENDING");
 
         if (isMerchant(authUser.role()) && product.getMerchantId() != authUser.id())
             throw CommonException.FORBIDDEN.toException("FORBIDDEN");
@@ -110,10 +124,23 @@ public class ProductService {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
 
+        if (product.isActive())
+            throw CommonException.BAD_REQUEST.toException("PRODUCT_MUST_BE_PENDING");
+
         if (isMerchant(authUser.role()) && product.getMerchantId() != authUser.id())
             throw CommonException.FORBIDDEN.toException("FORBIDDEN");
 
         product.archive();
+    }
+
+    @Transactional
+    public void deduct(Long id, ProductDTO.DeductRequest dto) {
+        var product = productRepository.findByIdWithLock((id)).orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
+
+        if (product.getStock() < dto.quantity())
+            throw CommonException.BAD_REQUEST.toException("PRODUCT_STOCK_NOT_ENOUGH");
+
+        product.update(product.getStock() - dto.quantity());
     }
 
     private boolean isMerchant(String role) {
