@@ -47,7 +47,7 @@ public class ProductService {
         if (isMerchant(authUser.role()) && product.getMerchantId() != authUser.id())
             throw CommonException.FORBIDDEN.toException("FORBIDDEN");
 
-        product.updateStatus(dto.status());
+        product.update(dto.status());
     }
 
     @Transactional
@@ -131,6 +131,16 @@ public class ProductService {
             throw CommonException.FORBIDDEN.toException("FORBIDDEN");
 
         product.archive();
+    }
+
+    @Transactional
+    public void deduct(Long id, ProductDTO.DeductRequest dto) {
+        var product = productRepository.findByIdWithLock((id)).orElseThrow(() -> CommonException.BAD_REQUEST.toException("PRODUCT_NOT_FOUND"));
+
+        if (product.getStock() < dto.quantity())
+            throw CommonException.BAD_REQUEST.toException("PRODUCT_STOCK_NOT_ENOUGH");
+
+        product.update(product.getStock() - dto.quantity());
     }
 
     private boolean isMerchant(String role) {

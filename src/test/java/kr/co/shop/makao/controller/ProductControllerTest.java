@@ -8,13 +8,21 @@ import kr.co.shop.makao.entity.Product;
 import kr.co.shop.makao.entity.User;
 import kr.co.shop.makao.enums.ProductStatus;
 import kr.co.shop.makao.enums.UserRole;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -45,6 +53,20 @@ class ProductControllerTest extends BaseIntegrationTest {
                     .setParameter("name", name)
                     .setParameter("status", productStatus.getValue())
                     .setParameter("merchantId", merchantId)
+                    .executeUpdate();
+            return em.createQuery("SELECT p FROM product p WHERE p.merchantId = :merchantId", Product.class)
+                    .setParameter("merchantId", merchantId)
+                    .getSingleResult();
+        });
+    }
+
+    private Product insertProduct(String name, long merchantId, ProductStatus productStatus, int stock) {
+        return transactionTemplate.execute(transactionStatus -> {
+            em.createQuery("INSERT INTO product (name, description, price, stock, status, merchantId) VALUES (:name, \"상품 설명\", 1000, :stock, :status, :merchantId)")
+                    .setParameter("name", name)
+                    .setParameter("status", productStatus.getValue())
+                    .setParameter("merchantId", merchantId)
+                    .setParameter("stock", stock)
                     .executeUpdate();
             return em.createQuery("SELECT p FROM product p WHERE p.merchantId = :merchantId", Product.class)
                     .setParameter("merchantId", merchantId)
@@ -585,6 +607,130 @@ class ProductControllerTest extends BaseIntegrationTest {
                     .then()
                     .statusCode(403)
                     .body("message", equalTo("FORBIDDEN"));
+        }
+    }
+
+    @Nested
+    class deduct {
+        @Test
+        void deduct_성공() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.CUSTOMER);
+            long customerId = findUserByEmail(email).getId();
+            Product product = insertProduct("상품", customerId, ProductStatus.ACTIVE, 1000);
+
+            ProductDTO.DeductRequest deductRequest = ProductDTO.DeductRequest.builder()
+                    .quantity(1000)
+                    .build();
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.CUSTOMER, email, customerId))
+                    .body(deductRequest)
+                    .when()
+                    .post("/products/deduction/" + product.getId())
+                    .then()
+                    .statusCode(200)
+                    .body("message", equalTo("OK"));
+        }
+
+        @Test
+        void deduct_동시_성공() throws InterruptedException {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.CUSTOMER);
+            long customerId = findUserByEmail(email).getId();
+            Product product = insertProduct("상품", customerId, ProductStatus.ACTIVE, 1000);
+
+            ProductDTO.DeductRequest deductRequest = ProductDTO.DeductRequest.builder()
+                    .quantity(10)
+                    .build();
+
+            ExecutorService executorService = Executors.newFixedThreadPool(10);
+            CountDownLatch latch = new CountDownLatch(10);
+
+            List<Callable<Void>> tasks = new ArrayList<>();
+            for (int i = 0; i < 10; i++) {
+                tasks.add(() -> {
+                    try {
+                        given().contentType(ContentType.JSON)
+                                .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.CUSTOMER, email, customerId))
+                                .body(deductRequest)
+                                .when()
+                                .post("/products/deduction/" + product.getId())
+                                .then()
+                                .statusCode(200)
+                                .body("message", equalTo("OK"));
+                    } finally {
+                        latch.countDown();
+                    }
+                    return null;
+                });
+            }
+
+            executorService.invokeAll(tasks);
+            latch.await();
+            executorService.shutdown();
+        }
+
+        @Test
+        void deduct_일부_동시_실패() throws InterruptedException {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.CUSTOMER);
+            long customerId = findUserByEmail(email).getId();
+            Product product = insertProduct("상품", customerId, ProductStatus.ACTIVE, 10);
+
+            ProductDTO.DeductRequest deductRequest = ProductDTO.DeductRequest.builder()
+                    .quantity(4)
+                    .build();
+
+            ExecutorService executorService = Executors.newFixedThreadPool(3);
+            CountDownLatch latch = new CountDownLatch(3);
+
+            List<Callable<Void>> tasks = new ArrayList<>();
+            AtomicLong successCount = new AtomicLong();
+
+            for (int i = 0; i < 3; i++) {
+                tasks.add(() -> {
+                    try {
+                        var response = given().contentType(ContentType.JSON)
+                                .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.CUSTOMER, email, customerId))
+                                .body(deductRequest)
+                                .when()
+                                .post("/products/deduction/" + product.getId());
+
+                        if (response.statusCode() == 200) successCount.getAndIncrement();
+                        return null;
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+
+            executorService.invokeAll(tasks);
+
+            latch.await();
+            executorService.shutdown();
+
+            Assertions.assertEquals(2, successCount.get());
+        }
+
+        @Test
+        void deduct_제품_없음_실패() {
+            String email = createRandomEmail();
+            insertUser("user", email, createRandomPhoneNumber(), "password", UserRole.CUSTOMER);
+            long wrongProductId = new Random().nextInt(10000000);
+
+            ProductDTO.DeductRequest deductRequest = ProductDTO.DeductRequest.builder()
+                    .quantity(1000)
+                    .build();
+
+            given().contentType(ContentType.JSON)
+                    .header("Authorization", "Bearer " + createToken(authProperties.getAccessTokenAlgorithm(), expiration, UserRole.CUSTOMER, email, new Random().nextLong()))
+                    .body(deductRequest)
+                    .when()
+                    .post("/products/deduction/" + wrongProductId)
+                    .then()
+                    .statusCode(400)
+                    .body("message", equalTo("PRODUCT_NOT_FOUND"));
         }
     }
 }

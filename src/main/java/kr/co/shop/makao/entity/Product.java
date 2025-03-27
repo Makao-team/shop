@@ -46,8 +46,12 @@ public class Product extends Auditable {
         dto.stock().ifPresent((stock) -> this.stock = stock);
     }
 
-    public void updateStatus(ProductStatus status) {
+    public void update(ProductStatus status) {
         this.status = status;
+    }
+
+    public void update(int stock) {
+        this.stock = stock;
     }
 
     public boolean isActive() {

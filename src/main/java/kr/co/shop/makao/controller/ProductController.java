@@ -92,4 +92,14 @@ public class ProductController {
         productService.archive(id, authUser);
         return CommonResponse.success(null);
     }
+
+    @Available(roles = {UserRole.CUSTOMER})
+    @PostMapping("/deduction/{id}")
+    ResponseEntity<CommonResponse<Void>> deduct(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductDTO.DeductRequest dto
+    ) {
+        productService.deduct(id, dto);
+        return CommonResponse.success(null);
+    }
 }

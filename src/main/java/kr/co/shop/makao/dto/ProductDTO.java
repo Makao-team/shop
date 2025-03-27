@@ -105,4 +105,12 @@ public record ProductDTO() {
             boolean last
     ) {
     }
+
+    @Builder
+    public record DeductRequest(
+            @NotNull(message = "INVALID_QUANTITY")
+            @Min(value = 1, message = "INVALID_QUANTITY")
+            int quantity
+    ) {
+    }
 }

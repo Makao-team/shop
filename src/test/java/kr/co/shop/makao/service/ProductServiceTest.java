@@ -315,4 +315,34 @@ class ProductServiceTest {
             assertThat(exception.getMessage()).isEqualTo("FORBIDDEN");
         }
     }
+
+    @Nested
+    class deduct {
+        ProductDTO.DeductRequest dto = ProductDTO.DeductRequest.builder()
+                .quantity(1)
+                .build();
+
+        @Test
+        void deduct_성공() {
+            when(productRepository.findByIdWithLock(anyLong())).thenReturn(Optional.of(Product.builder().id(1L).stock(10).build()));
+
+            productService.deduct(1L, dto);
+        }
+
+        @Test
+        void deduct_상품_없음_실패() {
+            when(productRepository.findByIdWithLock(anyLong())).thenReturn(Optional.empty());
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.deduct(1L, dto));
+            assertThat(exception.getMessage()).isEqualTo("PRODUCT_NOT_FOUND");
+        }
+
+        @Test
+        void deduct_재고_부족_실패() {
+            when(productRepository.findByIdWithLock(anyLong())).thenReturn(Optional.of(Product.builder().id(1L).stock(0).build()));
+
+            var exception = assertThrows(CommonExceptionImpl.class, () -> productService.deduct(1L, dto));
+            assertThat(exception.getMessage()).isEqualTo("PRODUCT_STOCK_NOT_ENOUGH");
+        }
+    }
 }
