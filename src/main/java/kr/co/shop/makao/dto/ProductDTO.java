@@ -23,12 +23,18 @@ public record ProductDTO() {
     }
 
     @Builder
+    public record UpdateStatusRequest(
+            @NotNull(message = "INVALID_STATUS") ProductStatus status
+    ) {
+    }
+
+    @Builder
     public record UpdateRequest(
             Optional<@NotBlankNullable(message = "BLANK_NAME") String> name,
             Optional<@NotBlankNullable(message = "BLANK_DESCRIPTION") String> description,
             Optional<@Min(value = 0, message = "INVALID_PRICE") Integer> price,
-            Optional<@Min(value = 0, message = "INVALID_STOCK") Integer> stock,
-            Optional<ProductStatus> status) {
+            Optional<@Min(value = 0, message = "INVALID_STOCK") Integer> stock
+    ) {
     }
 
     @Builder
@@ -97,6 +103,14 @@ public record ProductDTO() {
     public record FindAllDetailResponse(
             List<Product> contents,
             boolean last
+    ) {
+    }
+
+    @Builder
+    public record DeductRequest(
+            @NotNull(message = "INVALID_QUANTITY")
+            @Min(value = 1, message = "INVALID_QUANTITY")
+            int quantity
     ) {
     }
 }
